@@ -52,6 +52,8 @@ def get_maa_accuracy_for_all_images(est_poses_results):
         else:
             degenerate_names = np.append(degenerate_names, img_name)
 
+    print(degenerate_names)
+
     # second to get the MAA using the final degenerate_names (which will be skipped).
     for benchmark_iteration, data_from_benchmarck_iteration in est_poses_results.items():
         # using new metric from (https://www.kaggle.com/code/eduardtrulls/imc2022-training-data#kln-486)
