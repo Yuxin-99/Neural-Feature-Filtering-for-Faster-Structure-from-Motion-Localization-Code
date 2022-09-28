@@ -7,8 +7,6 @@
 import os
 import sys
 
-import cv2
-
 from database import COLMAPDatabase
 from database import pair_id_to_image_ids
 import numpy as np
@@ -63,7 +61,6 @@ def get_image_keypoints_data(db, img_id):
 
 def createDataForMatchNoMatchMatchabilityComparison(image_live_dir, db, images, points3D, output_db_path):
     print("Creating data..")
-    sift = cv2.SIFT_create()
     training_data_db = COLMAPDatabase.create_db_match_no_match_data(os.path.join(output_db_path, "training_data.db"))
     training_data_db.execute("BEGIN")
     for img_id , img_data in tqdm(images.items()): #localised only , not the db ones
@@ -71,46 +68,25 @@ def createDataForMatchNoMatchMatchabilityComparison(image_live_dir, db, images, 
         keypoints_data = get_image_keypoints_data(db, img_id)
         assert(img_data.xys.shape[0] == img_data.point3D_ids.shape[0] == descs.shape[0]) # just for my sanity
 
-        live_image_path = os.path.join(image_live_dir, img_data.name)
-        live_image = cv2.imread(live_image_path)
-
-        defined_kp = [cv2.KeyPoint(kp[0], kp[1], 1) for kp in keypoints_data[:,0:2]]
-
-
-        my_kp, defined_des = sift.compute(live_image, defined_kp)
-        kp2, des2 = sift.detectAndCompute(live_image, None)
-
-        bf = cv2.BFMatcher()
-        matches = bf.knnMatch(defined_des, des2, k=2)
-        good = []
-        for m, n in matches:
-            if m.distance < 0.75 * n.distance:
-                good.append([m])
-        img3 = cv2.drawMatchesKnn(live_image, my_kp, live_image, kp2, good, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-
-        cv2.imwrite("/home/Neural-Feature-Filtering-for-Faster-Structure-from-Motion-Localization-Code/" + "eduleye.jpg", img3)
-
-        import pdb
-        pdb.set_trace()
-
-        assert(len(defined_kp) == keypoints_data[:,0:2].shape[0])
-
         for i in range(img_data.point3D_ids.shape[0]): # can loop through descs or img_data.xys - same thing
             current_point3D_id = img_data.point3D_ids[i]
 
             if(current_point3D_id == -1): # means feature is unmatched
                 matched = 0
                 green_intensity = 0
-                xyz = np.array([0, 0, 0])  # safe to use as no image point will ever match to 0,0,0
+                # xyz = np.array([0, 0, 0])  # safe to use as no image point will ever match to 0,0,0
             else:
                 matched = 1
-                xyz = points3D[current_point3D_id].xyz  # np.float64
+                # xyz = points3D[current_point3D_id].xyz  # np.float64
                 green_intensity = points3D[current_point3D_id].rgb[1] # green
 
             desc = descs[i] # np.uint8
             xy = img_data.xys[i] #np.float64, same as xyz
             desc_scale = keypoints_data[i, 2]
             desc_orientation = keypoints_data[i, 3]
+
+            import pdb
+            pdb.set_trace()
 
             training_data_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                           (img_id,) + (COLMAPDatabase.array_to_blob(desc),) + (matched,) + (desc_scale,) +
