@@ -1,5 +1,7 @@
 import os
 from joblib import load
+
+from feature_matching_generator_ML import feature_matcher_wrapper_ml
 from feature_matching_generator_ML_comparison_models import feature_matcher_wrapper_generic_comparison_model
 from database import COLMAPDatabase
 import numpy as np
@@ -57,16 +59,16 @@ print("benchmarks_iters set to: " + str(benchmarks_iters))
 
 # NOTE: "model" needs to have a predict method and return predictions 0 and 1, not 0.5 or 0.12 or whatever
 
-print("Getting matches using Predicting Matchability (2014) + loading model..")
-model_path = os.path.join(comparison_data_path_PM, "rf_model_PM.joblib")
-model = load(model_path)
-matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_path_PM, model, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val)
-np.save(os.path.join(comparison_data_path_PM, "images_matching_time.npy"), images_matching_time)
-np.save(os.path.join(comparison_data_path_PM, "images_percentage_reduction.npy"), images_percentage_reduction)
-
-print(" RANSAC..")
-est_poses_results = benchmark(benchmarks_iters, ransac, matches, localised_query_images_names, K)
-np.save(os.path.join(comparison_data_path_PM, "est_poses_results.npy"), est_poses_results)
+# print("Getting matches using Predicting Matchability (2014) + loading model..")
+# model_path = os.path.join(comparison_data_path_PM, "rf_model_PM.joblib")
+# model = load(model_path)
+# matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_path_PM, model, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val)
+# np.save(os.path.join(comparison_data_path_PM, "images_matching_time.npy"), images_matching_time)
+# np.save(os.path.join(comparison_data_path_PM, "images_percentage_reduction.npy"), images_percentage_reduction)
+#
+# print(" RANSAC..")
+# est_poses_results = benchmark(benchmarks_iters, ransac, matches, localised_query_images_names, K)
+# np.save(os.path.join(comparison_data_path_PM, "est_poses_results.npy"), est_poses_results)
 
 # ----------------------------->
 
@@ -78,7 +80,16 @@ np.save(os.path.join(comparison_data_path_MoNM, "images_matching_time.npy"), ima
 np.save(os.path.join(comparison_data_path_MoNM, "images_percentage_reduction.npy"), images_percentage_reduction)
 
 print(" RANSAC..")
-est_poses_results = benchmark(benchmarks_iters, ransac, matches, localised_query_images_names, K)
+# debug
+baseline_output = os.path.join(prepared_data_path, "baseline_output")
+vanillia_matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_ml(base_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, baseline_output)
+
+est_poses_results_b = benchmark(benchmarks_iters, ransac, vanillia_matches, localised_query_images_names, K)
+est_poses_results_m = benchmark(benchmarks_iters, ransac, matches, localised_query_images_names, K)
+
+import pdb
+pdb.set_trace()
+
 np.save(os.path.join(comparison_data_path_MoNM, "est_poses_results.npy"), est_poses_results)
 
 # ----------------------------->
