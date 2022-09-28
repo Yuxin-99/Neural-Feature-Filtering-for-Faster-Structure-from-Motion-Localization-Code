@@ -116,7 +116,7 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
 
         if(model_type == "MatchNoMatch"):
             # use extra data from MatchNoMatch paper
-            test_data = np.c_[queryDescriptors, scales, orientations, xs, ys, greenInt].astype(np.float32)
+            test_data = np.c_[scales, orientations, xs, ys, greenInt].astype(np.float32)
         else:
             # use only SIFT
             test_data = queryDescriptors
