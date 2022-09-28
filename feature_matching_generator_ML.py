@@ -72,9 +72,6 @@ def feature_matcher_wrapper_ml(base_path, db, query_images, trainDescriptors, po
             keypoints_xy = keypoints_xy[random_idxs]
             queryDescriptors = queryDescriptors[random_idxs]
 
-        import pdb
-        pdb.set_trace()
-        
         save_debug_image(image_gt_path, keypoints_xy, keypoints_xy, debug_images_path, query_image) #pass keypoints_xy 2 times, here as no predictions
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()

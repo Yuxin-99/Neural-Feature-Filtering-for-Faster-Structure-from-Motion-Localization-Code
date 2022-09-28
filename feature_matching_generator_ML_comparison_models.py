@@ -133,9 +133,6 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
 
         predicted_keypoint_xy = keypoints_xy[predictions == 1]
 
-        import pdb
-        pdb.set_trace()
-
         save_debug_image(image_gt_path, keypoints_xy, predicted_keypoint_xy, debug_images_path, query_image)
 
         # from now on I will be using the descs and keypoints that Predicting Matchability (2014) / MatchNoMatch 2020 deemed matchable
