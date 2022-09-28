@@ -8,6 +8,8 @@ from database import COLMAPDatabase
 from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, get_query_images_pose_from_images, get_intrinsics_from_camera_bin
 from parameters import Parameters
 
+debug_method = ""
+
 def load_est_poses_results(path):
     # [pose, inliers_no, outliers_no, iterations, elapsed_time]
     return np.load(path, allow_pickle=True).item()
@@ -53,6 +55,9 @@ def get_maa_accuracy_for_all_images(est_poses_results):
             degenerate_names = np.append(degenerate_names, img_name)
 
     print(degenerate_names)
+    if(debug_method == "M. or no M. 2020" or debug_method == "All (~800)"):
+        import pdb
+        pdb.set_trace()
 
     # second to get the MAA using the final degenerate_names (which will be skipped).
     for benchmark_iteration, data_from_benchmarck_iteration in est_poses_results.items():
@@ -192,6 +197,7 @@ with open(result_file_output_path, 'w', encoding='UTF8') as f:
     # The other papers
     for method in comparison_methods:
         print(f"Doing Method {method}")
+        debug_method = method
         path = parameters.comparison_methods[method]
         comparison_path = os.path.join(base_path, path)
         est_poses_results = load_est_poses_results(os.path.join(comparison_path, f"est_poses_results.npy"))
@@ -209,6 +215,7 @@ with open(result_file_output_path, 'w', encoding='UTF8') as f:
     # Random and Baseline
     for method in baseline_methods:
         print(f"Doing Method {method}")
+        debug_method = method
         path = os.path.join(base_path, parameters.baseline_methods[method])
         est_poses_results = load_est_poses_results(os.path.join(path, f"est_poses_results.npy"))
 
