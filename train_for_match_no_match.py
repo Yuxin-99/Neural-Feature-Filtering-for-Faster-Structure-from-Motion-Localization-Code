@@ -31,9 +31,6 @@ rtree.setTermCriteria(( cv2.TERM_CRITERIA_MAX_ITER, 5, 0 ))
 
 rdata = getTrainingDataForMatchNoMatch(data_path)
 
-import pdb
-pdb.set_trace()
-
 X = rdata[:,:133].astype(np.float32)
 # https://stackoverflow.com/questions/36440266/how-to-use-opencv-rtrees-for-binary-classification
 y = rdata[:,133].astype(np.int32) # this needs to be int32 for classification
