@@ -31,7 +31,6 @@ rtree.setTermCriteria(( cv2.TERM_CRITERIA_MAX_ITER, 5, 0 ))
 
 rdata = getTrainingDataForMatchNoMatch(data_path)
 
-
 X = rdata[:,:133].astype(np.float32) # [sift (128), scales (1), orientations (1), xs (1), ys (1), greenInt (1)]
 # https://stackoverflow.com/questions/36440266/how-to-use-opencv-rtrees-for-binary-classification
 y = rdata[:,133].astype(np.int64) # this needs to be int32 (only opencv) for classification
@@ -39,7 +38,7 @@ y = rdata[:,133].astype(np.int64) # this needs to be int32 (only opencv) for cla
 X = X[:,128:] #removing SIFT (not used in paper)
 # SkLearn Model
 rf = RandomForestClassifier(n_estimators = 5, max_depth = 5,
-                            random_state = 0, min_samples_split = np.sqrt(X.shape[1]))
+                            random_state = 0, min_samples_split = 2) # roughly np.sqrt(X.shape[1])
 
 print("Training..")
 rf.fit(X, y)
