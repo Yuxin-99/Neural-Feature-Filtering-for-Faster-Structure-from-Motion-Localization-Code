@@ -31,10 +31,25 @@ rtree.setTermCriteria(( cv2.TERM_CRITERIA_MAX_ITER, 5, 0 ))
 
 rdata = getTrainingDataForMatchNoMatch(data_path)
 
-X = rdata[:,:133].astype(np.float32)
-# https://stackoverflow.com/questions/36440266/how-to-use-opencv-rtrees-for-binary-classification
-y = rdata[:,133].astype(np.int32) # this needs to be int32 for classification
 
+X = rdata[:,:133].astype(np.float32) # [sift (128), scales (1), orientations (1), xs (1), ys (1), greenInt (1)]
+# https://stackoverflow.com/questions/36440266/how-to-use-opencv-rtrees-for-binary-classification
+y = rdata[:,133].astype(np.int64) # this needs to be int32 (only opencv) for classification
+
+X = X[:,128:] #removing SIFT (not used in paper)
+# SkLearn Model
+rf = RandomForestClassifier(n_estimators = 5, max_depth = 5,
+                            random_state = 0, min_samples_split = np.sqrt(X.shape[1]))
+
+print("Training..")
+rf.fit(X, y)
+
+print("Dumping model..")
+dump(rf, os.path.join(data_path, "rf_match_no_match_sk.joblib"))
+
+print("Done!")
+
+# old opencv model from paper - not used
 # # https://stackoverflow.com/questions/53181119/python-opencv-rtrees-does-not-load-properly
 # train_data = cv2.ml.TrainData_create(samples=X, layout=cv2.ml.ROW_SAMPLE, responses=y)
 #
@@ -46,18 +61,3 @@ y = rdata[:,133].astype(np.int32) # this needs to be int32 for classification
 # print("Dumping model..")
 # rtree.save(os.path.join(data_path, "rf_match_no_match_opencv.xml"))
 # np.savetxt(os.path.join(data_path, "rf_generalization_error.txt"), [err])
-
-import pdb
-pdb.set_trace()
-
-# SkLearn Model
-rf = RandomForestClassifier(n_estimators = 5, max_depth = 5,
-                            random_state = 0, min_samples_split = np.sqrt(8))
-
-print("Training..")
-rf.fit(X, y)
-
-print("Dumping model..")
-dump(rf, os.path.join(data_path, "rf_match_no_match_sk.joblib"))
-
-print("Done!")
