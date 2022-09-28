@@ -84,8 +84,6 @@ print(" RANSAC..")
 baseline_output = os.path.join(prepared_data_path, "baseline_output")
 vanillia_matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_ml(base_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, baseline_output)
 
-import pdb
-pdb.set_trace()
 
 est_poses_results_b = benchmark(benchmarks_iters, ransac, vanillia_matches, localised_query_images_names, K)
 est_poses_results_m = benchmark(benchmarks_iters, ransac, matches, localised_query_images_names, K)
