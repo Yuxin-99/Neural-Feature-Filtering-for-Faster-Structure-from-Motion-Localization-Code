@@ -85,9 +85,6 @@ def createDataForMatchNoMatchMatchabilityComparison(image_live_dir, db, images, 
             desc_scale = keypoints_data[i, 2]
             desc_orientation = keypoints_data[i, 3]
 
-            import pdb
-            pdb.set_trace()
-
             training_data_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                           (img_id,) + (COLMAPDatabase.array_to_blob(desc),) + (matched,) + (desc_scale,) +
                           (desc_orientation,) + (xy[0],) + (xy[1],) + (int(green_intensity),))

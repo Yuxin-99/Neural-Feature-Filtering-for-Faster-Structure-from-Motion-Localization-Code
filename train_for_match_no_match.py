@@ -35,20 +35,24 @@ X = rdata[:,:133].astype(np.float32)
 # https://stackoverflow.com/questions/36440266/how-to-use-opencv-rtrees-for-binary-classification
 y = rdata[:,133].astype(np.int32) # this needs to be int32 for classification
 
-# https://stackoverflow.com/questions/53181119/python-opencv-rtrees-does-not-load-properly
-train_data = cv2.ml.TrainData_create(samples=X, layout=cv2.ml.ROW_SAMPLE, responses=y)
+# # https://stackoverflow.com/questions/53181119/python-opencv-rtrees-does-not-load-properly
+# train_data = cv2.ml.TrainData_create(samples=X, layout=cv2.ml.ROW_SAMPLE, responses=y)
+#
+# print("Training..(OpenCV model)")
+# rtree.train(trainData=train_data)
+#
+# err = rtree.calcError(train_data, True)[0]
+#
+# print("Dumping model..")
+# rtree.save(os.path.join(data_path, "rf_match_no_match_opencv.xml"))
+# np.savetxt(os.path.join(data_path, "rf_generalization_error.txt"), [err])
 
-print("Training..(OpenCV model)")
-rtree.train(trainData=train_data)
-
-err = rtree.calcError(train_data, True)[0]
-
-print("Dumping model..")
-rtree.save(os.path.join(data_path, "rf_match_no_match_opencv.xml"))
-np.savetxt(os.path.join(data_path, "rf_generalization_error.txt"), [err])
+import pdb
+pdb.set_trace()
 
 # SkLearn Model
-rf = RandomForestClassifier(n_estimators = 5, max_depth = 5, random_state = 0, class_weight={0:0.4, 1:0.6})
+rf = RandomForestClassifier(n_estimators = 5, max_depth = 5,
+                            random_state = 0, min_samples_split = np.sqrt(8))
 
 print("Training..")
 rf.fit(X, y)
