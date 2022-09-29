@@ -107,8 +107,8 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
         len_descs = queryDescriptors.shape[0]
 
         keypoints_meta_data = get_keypoints_meta_data(db, image_id) #np.c_[xy, kp_scales, kp_orientations]
-        scales = keypoints_meta_data[:,1]
-        orientations = keypoints_meta_data[:,2]
+        scales = keypoints_meta_data[:,2]
+        orientations = keypoints_meta_data[:,3]
         xs = keypoints_xy[:,0]
         ys = keypoints_xy[:,1]
         indxs = np.c_[np.round(ys), np.round(xs)].astype(np.int) #note the reverse here
@@ -116,6 +116,7 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
 
         if(model_type == "MatchNoMatch"):
             # use extra data from MatchNoMatch paper
+            # scales (1), orientations (1), xs (1), ys (1), greenInt (1)]
             test_data = np.c_[scales, orientations, xs, ys, greenInt].astype(np.float32)
         else:
             # use only SIFT
