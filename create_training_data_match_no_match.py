@@ -77,7 +77,7 @@ def createDataForMatchNoMatchMatchabilityComparison(image_live_dir, db, live_ima
         for i in range(img_data.xys.shape[0]): # can loop through descs or img_data.xys - same thing
             xy = img_data.xys[i] #np.float64, same as xyz
             current_point3D_id = img_data.point3D_ids[i]
-            live_image_file_xy_green_intensity = live_image_file[int(xy[0]), int(xy[1])][1]
+            live_image_file_xy_green_intensity = live_image_file[int(xy[1]), int(xy[0])][1] #reverse indexing
 
             if(current_point3D_id == -1): # means feature is unmatched
                 matched = 0
