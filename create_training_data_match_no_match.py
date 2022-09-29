@@ -61,7 +61,14 @@ def get_image_keypoints_data(db, img_id):
     xy = kp_data[:,0:2]
     return np.c_[xy, kp_scales, kp_orientations]
 
-def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_dir, db, live_images, output_db_path):
+def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_dir, db_live_path, live_images, output_db_path):
+    print("Getting Pairs")
+    pair_ids = db_live.execute("SELECT pair_id FROM matches").fetchall()
+
+
+    import pdb
+    pdb.set_trace()
+
     print("Creating data..")
     training_data_db = COLMAPDatabase.create_db_match_no_match_data(os.path.join(output_db_path, "training_data.db"))
     training_data_db.execute("BEGIN")

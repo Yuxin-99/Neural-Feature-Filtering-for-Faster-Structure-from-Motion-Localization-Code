@@ -96,7 +96,7 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
         image_id = get_image_id(db,query_image)
 
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
-        # both methods return xy
+        # both methods return x,y
         keypoints_xy = get_keypoints_xy(db, image_id)
         # just removing outliers, keypoints that COLMAP detected outside the frame... (a COLMAP bug maybe)
         invalid_rows = np.argwhere((keypoints_xy[:, 0] > image_width) | (keypoints_xy[:, 1] > image_height))
@@ -106,7 +106,7 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
         assert(queryDescriptors.shape[0] == keypoints_xy.shape[0])
         len_descs = queryDescriptors.shape[0]
 
-        keypoints_meta_data = get_keypoints_meta_data(db, image_id) #np.c_[xy, kp_scales, kp_orientations]
+        keypoints_meta_data = get_keypoints_meta_data(db, image_id) #np.c_[x, y, kp_scales, kp_orientations]
         scales = keypoints_meta_data[:,2]
         orientations = keypoints_meta_data[:,3]
         xs = keypoints_xy[:,0]
