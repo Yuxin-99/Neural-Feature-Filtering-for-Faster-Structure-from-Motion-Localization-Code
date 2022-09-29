@@ -91,6 +91,7 @@ def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_d
         descs_img1 = get_image_decs(db_live, img_id_1)
         descs_img2 = get_image_decs(db_live, img_id_2)
 
+        print(pair_id)
         pair_data = db_live.execute("SELECT rows, data FROM matches WHERE pair_id = " + "'" + str(pair_id) + "'").fetchone()
         rows = pair_data[0]
         cols = 2 #for each image
