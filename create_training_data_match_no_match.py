@@ -91,12 +91,12 @@ def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_d
         descs_img1 = get_image_decs(db_live, img_id_1)
         descs_img2 = get_image_decs(db_live, img_id_2)
 
-        print(pair_id)
-        if(pair_id == 2147483703):
-            import pdb
-            pdb.set_trace()
         pair_data = db_live.execute("SELECT rows, data FROM matches WHERE pair_id = " + "'" + str(pair_id) + "'").fetchone()
         rows = pair_data[0]
+
+        if(rows < 1): #no matches in this pair, no idea why COLMAP stores it...
+            continue
+
         cols = 2 #for each image
         zero_based_indices = COLMAPDatabase.blob_to_array(pair_data[1], np.uint32).reshape([rows, cols])
         zero_based_indices_left = zero_based_indices[:, 0]
@@ -146,7 +146,7 @@ def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_d
             desc_orientation = sample[3]
             live_image_file_xy_green_intensity = img_2_file[int(xy[1]), int(xy[0])][1]  # reverse indexing
             training_data_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                                     (img_id_1,) + (COLMAPDatabase.array_to_blob(desc),) + (1,) + (desc_scale,) + (desc_orientation,) + (xy[0],) + (xy[1],) + (
+                                     (img_id_2,) + (COLMAPDatabase.array_to_blob(desc),) + (1,) + (desc_scale,) + (desc_orientation,) + (xy[0],) + (xy[1],) + (
                                      int(live_image_file_xy_green_intensity),))
         # unmatched, img_2
         for i in range(keypoints_data_img_2_unmatched.shape[0]):
@@ -157,7 +157,7 @@ def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_d
             desc_orientation = sample[3]
             live_image_file_xy_green_intensity = img_2_file[int(xy[1]), int(xy[0])][1]  # reverse indexing
             training_data_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                                     (img_id_1,) + (COLMAPDatabase.array_to_blob(desc),) + (0,) + (desc_scale,) + (desc_orientation,) + (xy[0],) + (xy[1],) + (
+                                     (img_id_2,) + (COLMAPDatabase.array_to_blob(desc),) + (0,) + (desc_scale,) + (desc_orientation,) + (xy[0],) + (xy[1],) + (
                                      int(live_image_file_xy_green_intensity),))
 
     print("Committing..")
