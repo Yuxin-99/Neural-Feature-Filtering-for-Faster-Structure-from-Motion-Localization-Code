@@ -116,8 +116,8 @@ def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_d
             sample = keypoints_data_img_1_matched[i,:]
             xy = sample[0:2]
             desc = keypoints_data_img_1_matched_descs[i,:]
-            desc_scale = sample[i, 2]
-            desc_orientation = sample[i, 3]
+            desc_scale = sample[2]
+            desc_orientation = sample[3]
             live_image_file_xy_green_intensity = img_1_file[int(xy[1]), int(xy[0])][1]  # reverse indexing
             training_data_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                           (img_id_1,) + (COLMAPDatabase.array_to_blob(desc),) + (1,) + (desc_scale,) +
@@ -127,8 +127,8 @@ def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_d
             sample = keypoints_data_img_1_unmatched[i, :]
             xy = sample[0:2]
             desc = keypoints_data_img_1_unmatched_descs[i, :]
-            desc_scale = sample[i, 2]
-            desc_orientation = sample[i, 3]
+            desc_scale = sample[2]
+            desc_orientation = sample[3]
             live_image_file_xy_green_intensity = img_1_file[int(xy[1]), int(xy[0])][1]  # reverse indexing
             training_data_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                                      (img_id_1,) + (COLMAPDatabase.array_to_blob(desc),) + (0,) + (desc_scale,) + (desc_orientation,) + (xy[0],) + (xy[1],) + (
@@ -138,8 +138,8 @@ def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_d
             sample = keypoints_data_img_2_matched[i, :]
             xy = sample[0:2]
             desc = keypoints_data_img_2_matched_descs[i, :]
-            desc_scale = sample[i, 2]
-            desc_orientation = sample[i, 3]
+            desc_scale = sample[2]
+            desc_orientation = sample[3]
             live_image_file_xy_green_intensity = img_2_file[int(xy[1]), int(xy[0])][1]  # reverse indexing
             training_data_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                                      (img_id_1,) + (COLMAPDatabase.array_to_blob(desc),) + (1,) + (desc_scale,) + (desc_orientation,) + (xy[0],) + (xy[1],) + (
@@ -149,8 +149,8 @@ def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_d
             sample = keypoints_data_img_2_unmatched[i, :]
             xy = sample[0:2]
             desc = keypoints_data_img_2_unmatched_descs[i, :]
-            desc_scale = sample[i, 2]
-            desc_orientation = sample[i, 3]
+            desc_scale = sample[2]
+            desc_orientation = sample[3]
             live_image_file_xy_green_intensity = img_2_file[int(xy[1]), int(xy[0])][1]  # reverse indexing
             training_data_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                                      (img_id_1,) + (COLMAPDatabase.array_to_blob(desc),) + (0,) + (desc_scale,) + (desc_orientation,) + (xy[0],) + (xy[1],) + (
