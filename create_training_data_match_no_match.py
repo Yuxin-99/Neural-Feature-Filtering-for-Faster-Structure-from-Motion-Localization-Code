@@ -7,6 +7,8 @@
 import os
 import sys
 
+import cv2
+
 from database import COLMAPDatabase
 from database import pair_id_to_image_ids
 import numpy as np
@@ -59,12 +61,17 @@ def get_image_keypoints_data(db, img_id):
     xy = kp_data[:,0:2]
     return np.c_[xy, kp_scales, kp_orientations]
 
-def createDataForMatchNoMatchMatchabilityComparison(image_live_dir, db, images, points3D, output_db_path):
+def createDataForMatchNoMatchMatchabilityComparison(image_live_dir, db, db_images, points3D, output_db_path):
     print("Creating data..")
     training_data_db = COLMAPDatabase.create_db_match_no_match_data(os.path.join(output_db_path, "training_data.db"))
     training_data_db.execute("BEGIN")
-    for img_id , img_data in tqdm(images.items()): #localised only , not the db ones
+    for img_id , img_data in tqdm(db_images.items()): #localised only , not the db ones
         descs = get_image_decs(db, img_id)
+        import pdb
+        pdb.set_trace()
+        # query_image = query_images[i]
+        image_gt_path = os.path.join(image_live_dir, query_image)
+        query_image_file = cv2.imread(image_gt_path)
         keypoints_data = get_image_keypoints_data(db, img_id)
         assert(img_data.xys.shape[0] == img_data.point3D_ids.shape[0] == descs.shape[0]) # just for my sanity
 
@@ -73,7 +80,7 @@ def createDataForMatchNoMatchMatchabilityComparison(image_live_dir, db, images, 
 
             if(current_point3D_id == -1): # means feature is unmatched
                 matched = 0
-                green_intensity = 0
+                green_intensity = 0 #no! should be the color of the image keypoint
                 # xyz = np.array([0, 0, 0])  # safe to use as no image point will ever match to 0,0,0
             else:
                 matched = 1

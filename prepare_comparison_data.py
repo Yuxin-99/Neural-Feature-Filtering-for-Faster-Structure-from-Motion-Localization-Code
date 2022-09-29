@@ -57,7 +57,6 @@ db_gt = COLMAPDatabase.connect(db_gt_path)  # you need this database to get the 
 query_images = read_images_binary(query_images_bin_path)
 query_images_names = load_images_from_text_file(query_images_path)
 localised_query_images_names = get_localised_image_by_names(query_images_names, query_images_bin_path)
-query_images_ground_truth_poses = get_query_images_pose_from_images(localised_query_images_names, query_images)
 
 # live points
 # Note: you will need to run this first, "get_points_3D_mean_desc_single_model_ml.py" - to get the 3D points avg descs, and corresponding xyz coordinates (128 + 3) from the LIVE model.

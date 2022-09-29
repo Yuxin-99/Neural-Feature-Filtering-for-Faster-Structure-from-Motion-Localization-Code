@@ -38,7 +38,6 @@ query_images_names = load_images_from_text_file(query_images_path)
 points3D_info = np.load(os.path.join(ml_path, "avg_descs_xyz_ml.npy")).astype(np.float32)
 train_descriptors_live = points3D_info[:, 0:128]
 localised_query_images_names = get_localised_image_by_names(query_images_names, query_images_bin_path)
-query_images_ground_truth_poses = get_query_images_pose_from_images(localised_query_images_names, query_images)
 points3D_xyz_live = points3D_info[:,128:132]
 K = get_intrinsics_from_camera_bin(query_cameras_bin_path, 3)  # 3 because 1 -base, 2 -live, 3 -query images
 
