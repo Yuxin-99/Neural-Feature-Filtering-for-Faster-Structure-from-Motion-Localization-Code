@@ -61,12 +61,16 @@ def get_image_keypoints_data(db, img_id):
     xy = kp_data[:,0:2]
     return np.c_[xy, kp_scales, kp_orientations]
 
-def createDataForMatchNoMatchMatchabilityComparison(image_live_dir, db, live_images, points3D, output_db_path):
+def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_dir, db, live_images, output_db_path):
     print("Creating data..")
     training_data_db = COLMAPDatabase.create_db_match_no_match_data(os.path.join(output_db_path, "training_data.db"))
     training_data_db.execute("BEGIN")
     for img_id, img_data in tqdm(live_images.items()): #localised only , not the db ones
-        live_image_path = os.path.join(image_live_dir, img_data.name)
+        if('session' in live_image_path == False):
+            live_image_path = os.path.join(image_live_dir, img_data.name)
+        else:
+            live_image_path = os.path.join(image_base_dir, img_data.name) #then it is a base model image (still call it live for convinience)
+
         live_image_file = cv2.imread(live_image_path)
         keypoints_data = get_image_keypoints_data(db, img_id)
         descs = get_image_decs(db, img_id)
@@ -113,8 +117,9 @@ db_live = COLMAPDatabase.connect(parameters.live_db_path)
 live_model_images = read_images_binary(parameters.live_model_images_path)
 live_model_points3D = read_points3d_default(parameters.live_model_points3D_path)
 image_live_dir = os.path.join(base_path, 'live/images/')
+image_base_dir = os.path.join(base_path, 'base/images/')
 
 db_live_path = os.path.join(base_path, "live/database.db")
 output_path = os.path.join(base_path, "match_or_no_match_comparison_data")
 os.makedirs(output_path, exist_ok = True)
-createDataForMatchNoMatchMatchabilityComparison(image_live_dir, db_live, live_model_images, live_model_points3D, output_path)
+createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_dir, db_live, live_model_images, output_path)
