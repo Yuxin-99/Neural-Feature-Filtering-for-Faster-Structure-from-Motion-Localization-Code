@@ -69,10 +69,17 @@ def get_full_path(lpath, bpath, name):
         image_path = os.path.join(bpath, name)  # then it is a base model image (still call it live for convinience)
     return image_path
 
+def get_subset_of_pairs(all_pair_ids, no):
+    import pdb
+    pdb.set_trace()
 
-def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_dir, db_live, live_images, output_db_path):
+def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_dir, db_live, live_images, output_db_path, use_all_pairs=True):
     print("Getting Pairs")
-    pair_ids = db_live.execute("SELECT pair_id FROM matches").fetchall()
+    if(use_all_pairs):
+        pair_ids = db_live.execute("SELECT pair_id FROM matches").fetchall()
+    else:
+        all_pair_ids = db_live.execute("SELECT pair_id FROM matches").fetchall()
+        pair_ids = get_subset_of_pairs(all_pair_ids, 150) #as in paper
 
     print("Creating data..")
     training_data_db = COLMAPDatabase.create_db_match_no_match_data(os.path.join(output_db_path, "training_data.db"))
@@ -190,4 +197,4 @@ image_base_dir = os.path.join(base_path, 'base/images/')
 db_live_path = os.path.join(base_path, "live/database.db")
 output_path = os.path.join(base_path, "match_or_no_match_comparison_data")
 os.makedirs(output_path, exist_ok = True)
-createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_dir, db_live, live_model_images, output_path)
+createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_dir, db_live, live_model_images, output_path, use_all_pairs=False)
