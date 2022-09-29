@@ -66,7 +66,7 @@ def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_d
     training_data_db = COLMAPDatabase.create_db_match_no_match_data(os.path.join(output_db_path, "training_data.db"))
     training_data_db.execute("BEGIN")
     for img_id, img_data in tqdm(live_images.items()): #localised only , not the db ones
-        if('session' in live_image_path == False):
+        if('session' in img_data.name == False):
             live_image_path = os.path.join(image_live_dir, img_data.name)
         else:
             live_image_path = os.path.join(image_base_dir, img_data.name) #then it is a base model image (still call it live for convinience)
