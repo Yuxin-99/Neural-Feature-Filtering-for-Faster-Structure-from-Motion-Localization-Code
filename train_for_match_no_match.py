@@ -38,12 +38,20 @@ y = rdata[:,133].astype(np.int64) # this needs to be int32 (only opencv) for cla
 X = X[:,128:] #removing SIFT (not used in paper)
 # SkLearn Model
 rf = RandomForestClassifier(n_estimators = 5, max_depth = 5, min_samples_split = 2) # roughly np.sqrt(X.shape[1])
+rf_default = RandomForestClassifier() # roughly np.sqrt(X.shape[1])
 
-print("Training..")
+import pdb
+pdb.set_trace()
+
+print("Training 5 by 5..")
 rf.fit(X, y)
 
-print("Dumping model..")
+print("Training Default..")
+rf_default.fit(X, y)
+
+print("Dumping model (s)..")
 dump(rf, os.path.join(data_path, "rf_match_no_match_sk.joblib"))
+dump(rf, os.path.join(data_path, "rf_match_no_match_sk_default.joblib"))
 
 print("Done!")
 
