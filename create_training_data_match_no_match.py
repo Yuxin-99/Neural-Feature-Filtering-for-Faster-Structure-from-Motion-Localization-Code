@@ -6,13 +6,12 @@
 
 import os
 import sys
-
 import cv2
 
 from database import COLMAPDatabase
 from database import pair_id_to_image_ids
 import numpy as np
-from random import sample, choice
+import random
 from tqdm import tqdm
 from parameters import Parameters
 from point3D_loader import read_points3d_default
@@ -61,7 +60,6 @@ def get_image_keypoints_data(db, img_id):
     xy = kp_data[:,0:2]
     return np.c_[xy, kp_scales, kp_orientations]
 
-
 def get_full_path(lpath, bpath, name):
     if (('session' in name) == True):
         image_path = os.path.join(lpath, name)
@@ -70,8 +68,18 @@ def get_full_path(lpath, bpath, name):
     return image_path
 
 def get_subset_of_pairs(all_pair_ids, no):
-    import pdb
-    pdb.set_trace()
+    random.shuffle(all_pair_ids)
+    img_left_ids = []
+    img_right_ids = []
+    pair_ids = []
+    for i in range(len(all_pair_ids)): #no need for while loop, most likely 'no' will be very small.
+        if len(pair_ids) >= no:
+            return pair_ids
+        pair_id = all_pair_ids[i]
+        img_id_1, img_id_2 = pair_id_to_image_ids(pair_id)
+        if((img_id_1 not in img_left_ids) and (img_id_2 not in img_right_ids)):
+            pair_ids.append(pair_id)
+    return pair_ids
 
 def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_dir, db_live, live_images, output_db_path, use_all_pairs=True):
     print("Getting Pairs")
@@ -81,8 +89,11 @@ def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_d
         all_pair_ids = db_live.execute("SELECT pair_id FROM matches").fetchall()
         pair_ids = get_subset_of_pairs(all_pair_ids, 150) #as in paper
 
+    import pdb
+    pdb.set_trace()
+
     print("Creating data..")
-    training_data_db = COLMAPDatabase.create_db_match_no_match_data(os.path.join(output_db_path, "training_data.db"))
+    training_data_db = COLMAPDatabase.create_db_match_no_match_data(os.path.join(output_db_path, "training_data_small.db"))
     training_data_db.execute("BEGIN")
 
     for pair in tqdm(pair_ids):
