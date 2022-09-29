@@ -72,13 +72,14 @@ def get_subset_of_pairs(all_pair_ids, no):
     img_left_ids = []
     img_right_ids = []
     pair_ids = []
-    for i in range(len(all_pair_ids)): #no need for while loop, most likely 'no' will be very small.
-        if len(pair_ids) >= no:
-            return pair_ids
-        pair_id = all_pair_ids[i][0]
-        img_id_1, img_id_2 = pair_id_to_image_ids(pair_id)
-        if((img_id_1 not in img_left_ids) and (img_id_2 not in img_right_ids)):
-            pair_ids.append(all_pair_ids[i]) #which is a tuple
+    pbar = tqdm(total=no)
+    while (len(pair_ids) >= no):
+        rnd_pair_id = random.choice(pair_ids)
+        img_id_1, img_id_2 = pair_id_to_image_ids(rnd_pair_id[0])
+        if ((img_id_1 not in img_left_ids) and (img_id_2 not in img_right_ids)):
+            pair_ids.append(rnd_pair_id)  # which is a tuple
+            pbar.update(1)
+    pbar.close()
     return pair_ids
 
 def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_dir, db_live, live_images, output_db_path, pairs_limit=-1):
