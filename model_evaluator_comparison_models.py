@@ -70,7 +70,7 @@ print("benchmarks_iters set to: " + str(benchmarks_iters))
 # ----------------------------->
 
 print("Getting matches using Match or No Match: Keypoint Filtering based on Matching Probability + loading model..")
-model_path = os.path.join(comparison_data_path_MoNM, "rf_match_no_match_sk.joblib")
+model_path = os.path.join(comparison_data_path_MoNM, "rf_match_no_match_sk_default.joblib")
 model = load(model_path)
 matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_path_MoNM, model, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, model_type="MatchNoMatch")
 np.save(os.path.join(comparison_data_path_MoNM, "images_matching_time.npy"), images_matching_time)
