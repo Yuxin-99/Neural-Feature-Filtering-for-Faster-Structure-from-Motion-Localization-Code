@@ -179,7 +179,7 @@ with open(result_file_output_path, 'w', encoding='UTF8') as f:
     writer.writerow(header)
     # My NNs
     for method_idx in range(len(my_methods)):
-        # print(f"Doing Method {my_methods[method_idx]}")
+        print(f"Doing Method {my_methods[method_idx]}")
         # est_poses_results = load_est_poses_results(os.path.join(ml_path, f"est_poses_results_{method_idx}.npy"))
         #
         # errors_maas_mean, non_degenerate_poses_percentage, degenerate_poses_percentage, valid_poses_names = get_maa_accuracy_for_all_images(est_poses_results)
