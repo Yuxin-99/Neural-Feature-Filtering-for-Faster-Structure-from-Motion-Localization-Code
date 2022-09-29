@@ -88,6 +88,9 @@ def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_d
             else:
                 matched = 1
 
+            import pdb
+            pdb.set_trace()
+
             desc = descs[i] # np.uint8
             desc_scale = keypoints_data[i, 2]
             desc_orientation = keypoints_data[i, 3]
