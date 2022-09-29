@@ -61,40 +61,36 @@ def get_image_keypoints_data(db, img_id):
     xy = kp_data[:,0:2]
     return np.c_[xy, kp_scales, kp_orientations]
 
-def createDataForMatchNoMatchMatchabilityComparison(image_live_dir, db, db_images, points3D, output_db_path):
+def createDataForMatchNoMatchMatchabilityComparison(image_live_dir, db, live_images, points3D, output_db_path):
     print("Creating data..")
     training_data_db = COLMAPDatabase.create_db_match_no_match_data(os.path.join(output_db_path, "training_data.db"))
     training_data_db.execute("BEGIN")
-    for img_id , img_data in tqdm(db_images.items()): #localised only , not the db ones
-        descs = get_image_decs(db, img_id)
-        import pdb
-        pdb.set_trace()
-        # query_image = query_images[i]
-        image_gt_path = os.path.join(image_live_dir, query_image)
-        query_image_file = cv2.imread(image_gt_path)
+    for img_id, img_data in tqdm(live_images.items()): #localised only , not the db ones
+        live_image_path = os.path.join(image_live_dir, img_data.name)
+        live_image_file = cv2.imread(live_image_path)
         keypoints_data = get_image_keypoints_data(db, img_id)
-        assert(img_data.xys.shape[0] == img_data.point3D_ids.shape[0] == descs.shape[0]) # just for my sanity
+        descs = get_image_decs(db, img_id)
 
-        for i in range(img_data.point3D_ids.shape[0]): # can loop through descs or img_data.xys - same thing
+        assert len(img_data.point3D_ids) == keypoints_data.shape[0]
+        assert(img_data.xys.shape[0] == img_data.point3D_ids.shape[0] == descs.shape[0] == keypoints_data.shape[0]) # just for my sanity
+
+        for i in range(img_data.xys.shape[0]): # can loop through descs or img_data.xys - same thing
+            xy = img_data.xys[i] #np.float64, same as xyz
             current_point3D_id = img_data.point3D_ids[i]
+            live_image_file_xy_green_intensity = live_image_file[int(xy[0]), int(xy[1])][1]
 
             if(current_point3D_id == -1): # means feature is unmatched
                 matched = 0
-                green_intensity = 0 #no! should be the color of the image keypoint
-                # xyz = np.array([0, 0, 0])  # safe to use as no image point will ever match to 0,0,0
             else:
                 matched = 1
-                # xyz = points3D[current_point3D_id].xyz  # np.float64
-                green_intensity = points3D[current_point3D_id].rgb[1] # green
 
             desc = descs[i] # np.uint8
-            xy = img_data.xys[i] #np.float64, same as xyz
             desc_scale = keypoints_data[i, 2]
             desc_orientation = keypoints_data[i, 3]
 
             training_data_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                           (img_id,) + (COLMAPDatabase.array_to_blob(desc),) + (matched,) + (desc_scale,) +
-                          (desc_orientation,) + (xy[0],) + (xy[1],) + (int(green_intensity),))
+                          (desc_orientation,) + (xy[0],) + (xy[1],) + (int(live_image_file_xy_green_intensity),))
 
     print("Committing..")
     training_data_db.commit()
