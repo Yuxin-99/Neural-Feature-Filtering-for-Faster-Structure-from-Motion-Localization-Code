@@ -37,11 +37,8 @@ y = rdata[:,133].astype(np.int64) # this needs to be int32 (only opencv) for cla
 
 X = X[:,128:] #removing SIFT (not used in paper)
 # SkLearn Model
-rf = RandomForestClassifier(n_estimators = 5, max_depth = 5, min_samples_split = 2) # roughly np.sqrt(X.shape[1])
-rf_default = RandomForestClassifier() # roughly np.sqrt(X.shape[1])
-
-import pdb
-pdb.set_trace()
+rf = RandomForestClassifier(n_estimators = 5, max_depth = 5, min_samples_split = 2, n_jobs=-1) # roughly np.sqrt(X.shape[1])
+rf_default = RandomForestClassifier(n_jobs=-1) # roughly np.sqrt(X.shape[1])
 
 print("Training 5 by 5..")
 rf.fit(X, y)
