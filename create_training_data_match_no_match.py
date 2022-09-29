@@ -61,13 +61,36 @@ def get_image_keypoints_data(db, img_id):
     xy = kp_data[:,0:2]
     return np.c_[xy, kp_scales, kp_orientations]
 
+
+def get_full_path(lpath, bpath, name):
+    if (('session' in name) == True):
+        image_path = os.path.join(lpath, name)
+    else:
+        image_path = os.path.join(bpath, name)  # then it is a base model image (still call it live for convinience)
+    return image_path
+
+
 def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_dir, db_live, live_images, output_db_path):
     print("Getting Pairs")
     pair_ids = db_live.execute("SELECT pair_id FROM matches").fetchall()
 
+    print("Creating data..")
+    training_data_db = COLMAPDatabase.create_db_match_no_match_data(os.path.join(output_db_path, "training_data.db"))
+    training_data_db.execute("BEGIN")
+
     for pair in tqdm(pair_ids):
         pair_id = pair[0]
         img_id_1, img_id_2 = pair_id_to_image_ids(pair_id)
+
+        img_1_file_name = live_images[img_id_1].name
+        img_2_file_name = live_images[img_id_2].name
+
+        img_1_file = cv2.imread(get_full_path(image_live_dir, image_base_dir, img_1_file_name))
+        img_2_file = cv2.imread(get_full_path(image_live_dir, image_base_dir, img_2_file_name))
+
+        descs_img1 = get_image_decs(db_live, img_id_1)
+        descs_img2 = get_image_decs(db_live, img_id_2)
+
         pair_data = db_live.execute("SELECT rows, data FROM matches WHERE pair_id = " + "'" + str(pair_id) + "'").fetchone()
         rows = pair_data[0]
         cols = 2 #for each image
@@ -78,42 +101,60 @@ def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_d
         keypoints_data_img_1 = get_image_keypoints_data(db_live, img_id_1)
         keypoints_data_img_2 = get_image_keypoints_data(db_live, img_id_2)
 
-        import pdb
-        pdb.set_trace()
+        keypoints_data_img_1_matched = keypoints_data_img_1[zero_based_indices_left]
+        keypoints_data_img_1_matched_descs = descs_img1[zero_based_indices_left]
+        keypoints_data_img_1_unmatched = np.delete(keypoints_data_img_1, zero_based_indices_left, axis=0)
+        keypoints_data_img_1_unmatched_descs = np.delete(descs_img1, zero_based_indices_left, axis=0)
 
-    print("Creating data..")
-    training_data_db = COLMAPDatabase.create_db_match_no_match_data(os.path.join(output_db_path, "training_data.db"))
-    training_data_db.execute("BEGIN")
-    for img_id, img_data in tqdm(live_images.items()): #localised only , not the db ones
-        if(('session' in img_data.name) == True):
-            live_image_path = os.path.join(image_live_dir, img_data.name)
-        else:
-            live_image_path = os.path.join(image_base_dir, img_data.name) #then it is a base model image (still call it live for convinience)
+        keypoints_data_img_2_matched = keypoints_data_img_2[zero_based_indices_right]
+        keypoints_data_img_2_matched_descs = descs_img2[zero_based_indices_right]
+        keypoints_data_img_2_unmatched = np.delete(keypoints_data_img_2, zero_based_indices_right, axis=0)
+        keypoints_data_img_2_unmatched_descs = np.delete(descs_img2, zero_based_indices_right, axis=0)
 
-        live_image_file = cv2.imread(live_image_path)
-        keypoints_data = get_image_keypoints_data(db, img_id)
-        descs = get_image_decs(db, img_id)
-
-        assert len(img_data.point3D_ids) == keypoints_data.shape[0]
-        assert(img_data.xys.shape[0] == img_data.point3D_ids.shape[0] == descs.shape[0] == keypoints_data.shape[0]) # just for my sanity
-
-        for i in range(img_data.xys.shape[0]): # can loop through descs or img_data.xys - same thing
-            xy = img_data.xys[i] #np.float64, same as xyz
-            current_point3D_id = img_data.point3D_ids[i]
-            live_image_file_xy_green_intensity = live_image_file[int(xy[1]), int(xy[0])][1] #reverse indexing
-
-            if(current_point3D_id == -1): # means feature is unmatched
-                matched = 0
-            else:
-                matched = 1
-
-            desc = descs[i] # np.uint8
-            desc_scale = keypoints_data[i, 2]
-            desc_orientation = keypoints_data[i, 3]
-
+        # matched, img_1
+        for i in range(keypoints_data_img_1_matched.shape[0]):
+            sample = keypoints_data_img_1_matched[i,:]
+            xy = sample[0:2]
+            desc = keypoints_data_img_1_matched_descs[i,:]
+            desc_scale = sample[i, 2]
+            desc_orientation = sample[i, 3]
+            live_image_file_xy_green_intensity = img_1_file[int(xy[1]), int(xy[0])][1]  # reverse indexing
             training_data_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                          (img_id,) + (COLMAPDatabase.array_to_blob(desc),) + (matched,) + (desc_scale,) +
+                          (img_id_1,) + (COLMAPDatabase.array_to_blob(desc),) + (1,) + (desc_scale,) +
                           (desc_orientation,) + (xy[0],) + (xy[1],) + (int(live_image_file_xy_green_intensity),))
+        # unmatched, img_1
+        for i in range(keypoints_data_img_1_unmatched.shape[0]):
+            sample = keypoints_data_img_1_unmatched[i, :]
+            xy = sample[0:2]
+            desc = keypoints_data_img_1_unmatched_descs[i, :]
+            desc_scale = sample[i, 2]
+            desc_orientation = sample[i, 3]
+            live_image_file_xy_green_intensity = img_1_file[int(xy[1]), int(xy[0])][1]  # reverse indexing
+            training_data_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                                     (img_id_1,) + (COLMAPDatabase.array_to_blob(desc),) + (0,) + (desc_scale,) + (desc_orientation,) + (xy[0],) + (xy[1],) + (
+                                     int(live_image_file_xy_green_intensity),))
+        # matched, img_2
+        for i in range(keypoints_data_img_2_matched.shape[0]):
+            sample = keypoints_data_img_2_matched[i, :]
+            xy = sample[0:2]
+            desc = keypoints_data_img_2_matched_descs[i, :]
+            desc_scale = sample[i, 2]
+            desc_orientation = sample[i, 3]
+            live_image_file_xy_green_intensity = img_2_file[int(xy[1]), int(xy[0])][1]  # reverse indexing
+            training_data_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                                     (img_id_1,) + (COLMAPDatabase.array_to_blob(desc),) + (1,) + (desc_scale,) + (desc_orientation,) + (xy[0],) + (xy[1],) + (
+                                     int(live_image_file_xy_green_intensity),))
+        # unmatched, img_2
+        for i in range(keypoints_data_img_2_unmatched.shape[0]):
+            sample = keypoints_data_img_2_unmatched[i, :]
+            xy = sample[0:2]
+            desc = keypoints_data_img_2_unmatched_descs[i, :]
+            desc_scale = sample[i, 2]
+            desc_orientation = sample[i, 3]
+            live_image_file_xy_green_intensity = img_2_file[int(xy[1]), int(xy[0])][1]  # reverse indexing
+            training_data_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                                     (img_id_1,) + (COLMAPDatabase.array_to_blob(desc),) + (0,) + (desc_scale,) + (desc_orientation,) + (xy[0],) + (xy[1],) + (
+                                     int(live_image_file_xy_green_intensity),))
 
     print("Committing..")
     training_data_db.commit()
