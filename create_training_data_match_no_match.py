@@ -65,9 +65,13 @@ def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_d
     print("Getting Pairs")
     pair_ids = db_live.execute("SELECT pair_id FROM matches").fetchall()
 
-
-    import pdb
-    pdb.set_trace()
+    for pair in tqdm(pair_ids):
+        pair_id = pair[0]
+        img_id_1, img_id_2 = pair_id_to_image_ids(pair_id)
+        pair_data = db_live.execute("SELECT rows, data FROM matches WHERE pair_id = " + "'" + str(pair_id) + "'").fetchone()
+        
+        import pdb
+        pdb.set_trace()
 
     print("Creating data..")
     training_data_db = COLMAPDatabase.create_db_match_no_match_data(os.path.join(output_db_path, "training_data.db"))
