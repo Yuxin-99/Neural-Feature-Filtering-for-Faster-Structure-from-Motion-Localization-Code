@@ -82,6 +82,10 @@ def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_d
         pair_id = pair[0]
         img_id_1, img_id_2 = pair_id_to_image_ids(pair_id)
 
+        # when a db image has not been localised ...
+        if((img_id_1 not in live_images) or (img_id_2 not in live_images)):
+            continue
+
         img_1_file_name = live_images[img_id_1].name
         img_2_file_name = live_images[img_id_2].name
 
