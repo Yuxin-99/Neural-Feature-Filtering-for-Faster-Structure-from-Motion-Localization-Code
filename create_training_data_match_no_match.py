@@ -81,16 +81,13 @@ def get_subset_of_pairs(all_pair_ids, no):
             pair_ids.append(all_pair_ids[i]) #which is a tuple
     return pair_ids
 
-def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_dir, db_live, live_images, output_db_path, use_all_pairs=True):
+def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_dir, db_live, live_images, output_db_path, pairs_limit=-1):
     print("Getting Pairs")
-    if(use_all_pairs):
+    if(pairs_limit == -1):
         pair_ids = db_live.execute("SELECT pair_id FROM matches").fetchall()
     else:
         all_pair_ids = db_live.execute("SELECT pair_id FROM matches").fetchall()
-        pair_ids = get_subset_of_pairs(all_pair_ids, 150) #as in paper
-
-    import pdb
-    pdb.set_trace()
+        pair_ids = get_subset_of_pairs(all_pair_ids, pairs_limit) #as in paper
 
     print("Creating data..")
     training_data_db = COLMAPDatabase.create_db_match_no_match_data(os.path.join(output_db_path, "training_data_small.db"))
@@ -189,14 +186,15 @@ def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_d
     matched = training_data_db.execute("SELECT * FROM data WHERE matched = 1").fetchall()
     unmatched = training_data_db.execute("SELECT * FROM data WHERE matched = 0").fetchall()
 
-    print("Total descs: " + str(len(stats)))
-    print("Total matched descs: " + str(len(matched)))
-    print("Total unmatched descs: " + str(len(unmatched)))
-    print("% of matched decs: " + str(len(matched) * 100 / len(unmatched)))
+    print("Total samples: " + str(len(stats)))
+    print("Total matched samples: " + str(len(matched)))
+    print("Total unmatched samples: " + str(len(unmatched)))
+    print("% of matched samples: " + str(len(matched) * 100 / len(unmatched)))
 
     print("Done!")
 
 base_path = sys.argv[1]
+pairs_limit = int(sys.argv[2])
 print("Base path: " + base_path)
 parameters = Parameters(base_path)
 db_live = COLMAPDatabase.connect(parameters.live_db_path)
@@ -208,4 +206,4 @@ image_base_dir = os.path.join(base_path, 'base/images/')
 db_live_path = os.path.join(base_path, "live/database.db")
 output_path = os.path.join(base_path, "match_or_no_match_comparison_data")
 os.makedirs(output_path, exist_ok = True)
-createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_dir, db_live, live_model_images, output_path, use_all_pairs=False)
+createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_dir, db_live, live_model_images, output_path, pairs_limit= pairs)
