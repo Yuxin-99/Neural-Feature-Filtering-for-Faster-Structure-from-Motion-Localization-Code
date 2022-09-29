@@ -61,7 +61,7 @@ def get_image_keypoints_data(db, img_id):
     xy = kp_data[:,0:2]
     return np.c_[xy, kp_scales, kp_orientations]
 
-def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_dir, db_live_path, live_images, output_db_path):
+def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_dir, db_live, live_images, output_db_path):
     print("Getting Pairs")
     pair_ids = db_live.execute("SELECT pair_id FROM matches").fetchall()
 
@@ -69,7 +69,15 @@ def createDataForMatchNoMatchMatchabilityComparison(image_base_dir, image_live_d
         pair_id = pair[0]
         img_id_1, img_id_2 = pair_id_to_image_ids(pair_id)
         pair_data = db_live.execute("SELECT rows, data FROM matches WHERE pair_id = " + "'" + str(pair_id) + "'").fetchone()
-        
+        rows = pair_data[0]
+        cols = 2 #for each image
+        zero_based_indices = COLMAPDatabase.blob_to_array(pair_data[1], np.uint32).reshape([rows, cols])
+        zero_based_indices_left = zero_based_indices[:, 0]
+        zero_based_indices_right = zero_based_indices[:, 1]
+
+        keypoints_data_img_1 = get_image_keypoints_data(db_live, img_id_1)
+        keypoints_data_img_2 = get_image_keypoints_data(db_live, img_id_2)
+
         import pdb
         pdb.set_trace()
 
