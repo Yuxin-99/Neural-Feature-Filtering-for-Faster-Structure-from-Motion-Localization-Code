@@ -89,30 +89,6 @@ class COLMAPDatabase(sqlite3.Connection):
             print(e)    \
 
     @staticmethod
-    def create_db_match_no_match_data(db_file):
-        sql_drop_table_if_exists = "DROP TABLE IF EXISTS data;"
-        sql_create_data_table = """CREATE TABLE IF NOT EXISTS data (
-                                                    image_id INTEGER NOT NULL,
-                                                    sift BLOB NOT NULL,
-                                                    matched INTEGER NOT NULL,
-                                                    scale FLOAT NOT NULL,
-                                                    orientation FLOAT NOT NULL,
-                                                    x FLOAT NOT NULL,
-                                                    y FLOAT NOT NULL,
-                                                    greenInt INTEGER NOT NULL
-                                                );"""
-        conn = None
-        try:
-            conn = sqlite3.connect(db_file)
-            conn.execute(sql_drop_table_if_exists)
-            conn.commit()
-            conn.execute(sql_create_data_table)
-            conn.commit()
-            return conn
-        except Error as e:
-            print(e)
-
-    @staticmethod
     def create_db_for_visual_data(db_file):
         sql_drop_table_if_exists = "DROP TABLE IF EXISTS data;"
         sql_create_data_table = """CREATE TABLE IF NOT EXISTS data (
@@ -131,3 +107,14 @@ class COLMAPDatabase(sqlite3.Connection):
             return conn
         except Error as e:
             print(e)
+
+    def add_keypoints(self, image_id, keypoints):
+        assert (len(keypoints.shape) == 2)
+        assert (keypoints.shape[1] in [2, 4, 6])
+
+        keypoints = np.asarray(keypoints, np.float32)
+        self.execute("INSERT INTO keypoints VALUES (?, ?, ?, ?)", (image_id,) + keypoints.shape + (self.array_to_blob(keypoints),))
+
+    def add_descriptors(self, image_id, descriptors):
+        descriptors = np.ascontiguousarray(descriptors, np.uint8)
+        self.execute("INSERT INTO descriptors VALUES (?, ?, ?, ?)", (image_id,) + descriptors.shape + (self.array_to_blob(descriptors),))

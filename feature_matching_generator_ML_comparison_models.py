@@ -128,7 +128,8 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
 
         query_image_file_copy = query_image_file.copy()
         mask = np.zeros([query_image_file_copy.shape[0], query_image_file_copy.shape[1]])
-        kps = sift.detect(query_image_file_copy, )
+        kps = sift.detect(query_image_file_copy, mask)
+        kps = sift.compute(query_image_file_copy, my_kps)
 
         start = time.time()
         # predictions_opencv = rtree_opencv.predict(test_data, cv2.ml.RAW_OUTPUT) #not working !
