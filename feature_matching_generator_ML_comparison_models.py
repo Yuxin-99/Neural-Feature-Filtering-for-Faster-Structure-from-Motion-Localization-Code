@@ -80,6 +80,7 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
     debug_images_path = os.path.join(comparison_data_path, "debug_images")
     images_percentage_reduction = {}
     images_matching_time = {}
+    sift = cv2.SIFT_create()
 
     if (exists(comparison_data_path) == False):
         print("comparison_data_path does not exist ! will create")
@@ -121,6 +122,13 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
         else:
             # use only SIFT
             test_data = queryDescriptors
+
+        import pdb
+        pdb.set_trace()
+
+        query_image_file_copy = query_image_file.copy()
+        mask = np.zeros([query_image_file_copy.shape[0], query_image_file_copy.shape[1]])
+        kps = sift.detect(query_image_file_copy, )
 
         start = time.time()
         # predictions_opencv = rtree_opencv.predict(test_data, cv2.ml.RAW_OUTPUT) #not working !
