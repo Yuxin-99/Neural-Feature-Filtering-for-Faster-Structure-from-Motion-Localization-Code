@@ -32,8 +32,32 @@
 
 int main(int argc, char *argv[]) {
 
+	cv::Mat I = cv::imread("img_00906_c0_1292959022925086us.jpg"); // load the image
 
-    exit()
+	std::vector<cv::Point2f> inputs;
+
+	inputs.push_back(cv::Point(74,114)); // manually defined landmark
+	inputs.push_back(cv::Point(130,114)); // manually defined landmark 
+	inputs.push_back(cv::Point(300,200)); // manually defined landmark 
+	inputs.push_back(cv::Point(490,110)); // manually defined landmark 
+
+	std::vector<cv::KeyPoint> kp;
+	for( size_t i = 0; i < inputs.size(); i++ ) {
+		kp.push_back(cv::KeyPoint(inputs[i], 1.f));
+	}
+
+	cv::Mat descriptors;
+	cv::Ptr<cv::Feature2D> pImageSIFT = cv::SIFT::create();
+	pImageSIFT->compute(I, kp, descriptors); // descriptors are the sift descriptors on manually defined landmarks
+	
+	for( size_t i = 0; i < kp.size(); i++ ){
+		std::cout << "response " << kp[i].response  << std::endl;;
+		std::cout << "size " << kp[i].size  << std::endl;;
+		std::cout << "octave " << kp[i].octave  << std::endl;;
+	}
+
+
+	exit(0);
 
 	// INPUTS *********************************************************************************************
 	/// For Training and Testing phase: Amount of features which define the classifier architecture. (8=proposed, 128=Predicting matchability 2014)
