@@ -118,3 +118,14 @@ class COLMAPDatabase(sqlite3.Connection):
     def add_descriptors(self, image_id, descriptors):
         descriptors = np.ascontiguousarray(descriptors, np.uint8)
         self.execute("INSERT INTO descriptors VALUES (?, ?, ?, ?)", (image_id,) + descriptors.shape + (self.array_to_blob(descriptors),))
+
+    def replace_keypoints(self, image_id, keypoints):
+        assert (len(keypoints.shape) == 2)
+        assert (keypoints.shape[1] in [2, 4, 6])
+
+        keypoints = np.asarray(keypoints, np.float32)
+        self.execute("INSERT INTO keypoints VALUES (?, ?, ?, ?) WHERE image_id = " + "'" + str(image_id) + "'", (image_id,) + keypoints.shape + (self.array_to_blob(keypoints),))
+
+    def replace_descriptors(self, image_id, descriptors):
+        descriptors = np.ascontiguousarray(descriptors, np.uint8)
+        self.execute("INSERT INTO descriptors VALUES (?, ?, ?, ?) WHERE image_id = " + "'" + str(image_id) + "'", (image_id,) + descriptors.shape + (self.array_to_blob(descriptors),))

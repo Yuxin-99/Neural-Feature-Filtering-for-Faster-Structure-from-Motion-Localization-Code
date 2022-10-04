@@ -280,6 +280,12 @@ def get_all_images_names_from_db(db):
     image_names = [image_names_tuple[0] for image_names_tuple in image_names_tuples]
     return image_names
 
+def get_all_images_ids_from_db(db):
+    image_ids = db.execute("SELECT id FROM images")
+    image_ids_tuples = image_ids.fetchall()
+    image_ids = [image_id_tuple[0] for image_id_tuple in image_ids_tuples]
+    return image_ids
+
 def get_images_names_bin(images_bin_path):
     images_names = []
     images = read_images_binary(images_bin_path)

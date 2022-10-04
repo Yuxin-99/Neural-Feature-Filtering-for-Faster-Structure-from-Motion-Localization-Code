@@ -14,7 +14,7 @@ import random
 from tqdm import tqdm
 from parameters import Parameters
 from point3D_loader import read_points3d_default
-from query_image import read_images_binary
+from query_image import read_images_binary, get_all_images_ids_from_db
 
 base_path = sys.argv[1]
 db_path = os.path.join(base_path, 'databases.db')
@@ -22,14 +22,20 @@ images_path = os.path.join(base_path, 'images')
 model_path = os.path.join(base_path, 'model/0')
 model_txt_path = os.path.join(base_path, 'txt')
 
-breakpoint()
-
 reconstruction = pycolmap.Reconstruction(model_path)
 db = COLMAPDatabase.connect(db_path)
 
 # export model to txt
+os.makedirs(model_txt_path, exist_ok = True)
 reconstruction.write_text(model_txt_path)
 
+image_ids = get_all_images_ids_from_db(db);
+
+breakpoint()
+
+# TODO:
+# clear matches table
+# clear two_view geometry table
 
 
 # old code
