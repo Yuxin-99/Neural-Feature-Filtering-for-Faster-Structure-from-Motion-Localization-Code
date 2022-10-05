@@ -121,8 +121,9 @@ class COLMAPDatabase(sqlite3.Connection):
 
     def update_keypoints(self, image_id, keypoints):
         assert (len(keypoints.shape) == 2)
-        assert (keypoints.shape[1] in [2, 4, 6])
+        assert (keypoints.shape[1] in [2, 4, 6, 7]) # I added 7 for match no match
 
+        breakpoint()
         keypoints = np.asarray(keypoints, np.float32)
         self.execute("UPDATE keypoints SET rows = " + "'" + str(keypoints.shape[0]) + "' ," + "cols = " + "'" + str(image_id) + "', " + "data = " + "'" + self.array_to_blob(keypoints) + "' WHERE image_id = " + "'" + str(image_id) + "'")
 

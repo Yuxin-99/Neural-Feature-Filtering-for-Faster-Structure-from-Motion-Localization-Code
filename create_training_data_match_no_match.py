@@ -50,7 +50,7 @@ image_ids = get_all_images_ids_from_db(db)
 
 sift = cv2.SIFT_create()
 
-for image_id in image_ids:
+for image_id in tqdm(image_ids):
     image_name = get_image_name_from_db_with_id(db, image_id)
     image_file_path = os.path.join(images_path, image_name)
     img = cv2.imread(image_file_path)
@@ -61,6 +61,9 @@ for image_id in image_ids:
     kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response, dominantOrientations[i]] for i in range(len(kps))]
     kps_plain = np.array(kps_plain)
 
+    db.update_keypoints(image_id, kps_plain)
+
+    breakpoint()
 # extract opencv features
 # insert data in database
 
