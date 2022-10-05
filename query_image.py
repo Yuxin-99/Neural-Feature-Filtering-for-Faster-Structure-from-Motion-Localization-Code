@@ -281,8 +281,8 @@ def get_all_images_names_from_db(db):
     return image_names
 
 def get_image_name_from_db_with_id(db, image_id):
-    image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(image_id) + "'")
-    return image_name[0]
+    image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(image_id) + "'").fetchone()[0]
+    return image_name
 
 def get_all_images_ids_from_db(db):
     image_ids = db.execute("SELECT image_id FROM images")
