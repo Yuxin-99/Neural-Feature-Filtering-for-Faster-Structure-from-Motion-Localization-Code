@@ -24,8 +24,14 @@ def countDominantOrientations(keypoints):
             dominantsIndex[i,0] = 1
             nDominants = 1
         for j in range(i+1, len(keypoints), 1):
-            breakpoint()
-
+            dist = np.abs(keypoints[i].pt[0] - keypoints[j].pt[0]) + np.abs(keypoints[i].pt[1] - keypoints[j].pt[1])
+            if(dist == 0.0):
+                nDominants +=1
+                dominantsIndex[j, 0] = 1
+        for k in range(len(dominantsIndex)):
+            if(dominantsIndex[k,0] == 1):
+                domOrientations[k,0] = nDominants
+    return domOrientations
 
 
 base_path = sys.argv[1]
@@ -53,6 +59,7 @@ for image_id in image_ids:
     kps_plain = []
     dominantOrientations = countDominantOrientations(kps)
     assert dominantOrientations.shape[0] == len(kps)
+    breakpoint()
     kps_plain += [[kp.pt[0], kp.pt[1], kp.octave, kp.angle, kp.size, kp.response] for kp in kps]
     kps_plain = np.array(kps_plain)
 
