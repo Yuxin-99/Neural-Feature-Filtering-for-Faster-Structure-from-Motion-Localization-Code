@@ -16,6 +16,11 @@ from parameters import Parameters
 from point3D_loader import read_points3d_default
 from query_image import read_images_binary, get_all_images_ids_from_db, get_image_name_from_db_with_id
 
+def countDominantOrientations(keypoints):
+    breakpoint()
+    domOrientations = np.ones([len(keypoints),1])
+
+
 base_path = sys.argv[1]
 db_path = os.path.join(base_path, 'database.db')
 images_path = os.path.join(base_path, 'images')
@@ -31,9 +36,19 @@ reconstruction.write_text(model_txt_path)
 
 image_ids = get_all_images_ids_from_db(db)
 
+sift = cv2.SIFT_create()
+
 for image_id in image_ids:
-    breakpoint()
     image_name = get_image_name_from_db_with_id(db, image_id)
+    image_file_path = os.path.join(images_path, image_name)
+    img = cv2.imread(image_file_path)
+    kps, des = sift.detectAndCompute(img,None)
+    kps_plain = []
+    dominantOrientations = countDominantOrientations(kps)
+    assert dominantOrientations.shape[0] == len(kps)
+    kps_plain += [[kp.pt[0], kp.pt[1], kp.octave, kp.angle, kp.size, kp.response] for kp in kps]
+    kps_plain = np.array(kps_plain)
+
 # extract opencv features
 # insert data in database
 
