@@ -82,10 +82,11 @@ sift = cv2.SIFT_create()
 # db.delete_all_matches()
 # db.delete_all_two_view_geometries()
 # db.commit()
-#
-# empty_points_3D_txt_file(points_3D_file_txt_path)
+
+empty_points_3D_txt_file(points_3D_file_txt_path)
 arrange_images_txt_file(images_file_txt_path)
 
+print("Done!")
 
 # old code
 #
