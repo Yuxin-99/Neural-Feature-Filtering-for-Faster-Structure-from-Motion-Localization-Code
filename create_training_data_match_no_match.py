@@ -17,8 +17,15 @@ from point3D_loader import read_points3d_default
 from query_image import read_images_binary, get_all_images_ids_from_db, get_image_name_from_db_with_id
 
 def countDominantOrientations(keypoints):
-    breakpoint()
     domOrientations = np.ones([len(keypoints),1])
+    for i in range(len(keypoints)):
+        if(domOrientations[i,0] == 1): # if point has not been checked before
+            dominantsIndex = np.zeros([len(keypoints),1])
+            dominantsIndex[i,0] = 1
+            nDominants = 1
+        for j in range(i+1, len(keypoints), 1):
+            breakpoint()
+
 
 
 base_path = sys.argv[1]
