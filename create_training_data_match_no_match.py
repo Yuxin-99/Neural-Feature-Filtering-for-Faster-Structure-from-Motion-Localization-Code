@@ -33,7 +33,6 @@ def countDominantOrientations(keypoints):
                 domOrientations[k,0] = nDominants
     return domOrientations
 
-
 base_path = sys.argv[1]
 db_path = os.path.join(base_path, 'database.db')
 images_path = os.path.join(base_path, 'images')
@@ -59,8 +58,7 @@ for image_id in image_ids:
     kps_plain = []
     dominantOrientations = countDominantOrientations(kps)
     assert dominantOrientations.shape[0] == len(kps)
-    breakpoint()
-    kps_plain += [[kp.pt[0], kp.pt[1], kp.octave, kp.angle, kp.size, kp.response] for kp in kps]
+    kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response, dominantOrientations[i]] for i in range(len(kps))]
     kps_plain = np.array(kps_plain)
 
 # extract opencv features
