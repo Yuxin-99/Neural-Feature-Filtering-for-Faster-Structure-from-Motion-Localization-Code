@@ -121,7 +121,7 @@ class COLMAPDatabase(sqlite3.Connection):
 
     def replace_keypoints(self, image_id, keypoints):
         assert (len(keypoints.shape) == 2)
-        assert (keypoints.shape[1] in [2, 4, 6, 7]) # I added 7 for match no match
+        assert (keypoints.shape[1] in [2, 4, 6])
 
         # delete first
         self.execute("DELETE FROM keypoints WHERE image_id = " + "'" + str(image_id) + "'")
