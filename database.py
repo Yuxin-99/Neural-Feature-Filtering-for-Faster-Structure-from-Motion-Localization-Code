@@ -134,3 +134,9 @@ class COLMAPDatabase(sqlite3.Connection):
         self.execute("DELETE FROM descriptors WHERE image_id = " + "'" + str(image_id) + "'")
         descriptors = np.ascontiguousarray(descriptors, np.uint8)
         self.execute("INSERT INTO descriptors VALUES (?, ?, ?, ?)", (image_id,) + descriptors.shape + (self.array_to_blob(descriptors),))
+
+    def delete_all_matches(self):
+        self.execute("DELETE FROM matches")
+
+    def delete_all_two_view_geometries(self):
+        self.execute("DELETE FROM two_view_geometries")

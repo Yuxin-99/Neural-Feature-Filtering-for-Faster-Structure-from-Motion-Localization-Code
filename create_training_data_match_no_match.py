@@ -16,6 +16,19 @@ from parameters import Parameters
 from point3D_loader import read_points3d_default
 from query_image import read_images_binary, get_all_images_ids_from_db, get_image_name_from_db_with_id
 
+def empty_points_3D_txt_file(path):
+    open(path, 'w').close()
+
+def arrange_images_txt_file(path):
+    with open(path, "r") as f:
+        lines = f.readlines()
+    with open(path, "w") as f:
+        for line in lines:
+            if "#" in line or ".jpg" in line:
+                f.write(line)
+            else:
+                f.write("\n")
+
 def countDominantOrientations(keypoints):
     domOrientations = np.ones([len(keypoints),1])
     for i in range(len(keypoints)):
@@ -38,6 +51,8 @@ db_path = os.path.join(base_path, 'database.db')
 images_path = os.path.join(base_path, 'images')
 model_path = os.path.join(base_path, 'model/0')
 model_txt_path = os.path.join(base_path, 'txt')
+points_3D_file_txt_path = os.path.join(model_txt_path, 'points3D.txt')
+images_file_txt_path = os.path.join(model_txt_path, 'images.txt')
 
 reconstruction = pycolmap.Reconstruction(model_path)
 db = COLMAPDatabase.connect(db_path)
@@ -50,30 +65,26 @@ image_ids = get_all_images_ids_from_db(db)
 
 sift = cv2.SIFT_create()
 
-for image_id in tqdm(image_ids):
-    image_name = get_image_name_from_db_with_id(db, image_id)
-    image_file_path = os.path.join(images_path, image_name)
-    img = cv2.imread(image_file_path)
-    kps, des = sift.detectAndCompute(img,None)
-    kps_plain = []
-    dominantOrientations = countDominantOrientations(kps)
-    assert dominantOrientations.shape[0] == len(kps)
-    kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response, dominantOrientations[i,0]] for i in range(len(kps))]
-    kps_plain = np.array(kps_plain)
-
-    db.replace_keypoints(image_id, kps_plain)
-    db.replace_descriptors(image_id, des)
-
-breakpoint()
-db.commit()
-# extract opencv features
-# insert data in database
-
-breakpoint()
-
-# TODO:
-# clear matches table
-# clear two_view geometry table
+# for image_id in tqdm(image_ids):
+#     image_name = get_image_name_from_db_with_id(db, image_id)
+#     image_file_path = os.path.join(images_path, image_name)
+#     img = cv2.imread(image_file_path)
+#     kps, des = sift.detectAndCompute(img,None)
+#     kps_plain = []
+#     dominantOrientations = countDominantOrientations(kps)
+#     assert dominantOrientations.shape[0] == len(kps)
+#     kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response, dominantOrientations[i,0]] for i in range(len(kps))]
+#     kps_plain = np.array(kps_plain)
+#
+#     db.replace_keypoints(image_id, kps_plain)
+#     db.replace_descriptors(image_id, des)
+#
+# db.delete_all_matches()
+# db.delete_all_two_view_geometries()
+# db.commit()
+#
+# empty_points_3D_txt_file(points_3D_file_txt_path)
+arrange_images_txt_file(images_file_txt_path)
 
 
 # old code
