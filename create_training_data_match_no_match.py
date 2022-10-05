@@ -7,6 +7,8 @@ import os
 import sys
 import cv2
 import pycolmap
+
+import colmap
 from database import COLMAPDatabase
 from database import pair_id_to_image_ids
 import numpy as np
@@ -50,43 +52,48 @@ base_path = sys.argv[1]
 db_path = os.path.join(base_path, 'database.db')
 images_path = os.path.join(base_path, 'images')
 model_path = os.path.join(base_path, 'model/0')
-model_txt_path = os.path.join(base_path, 'txt')
-points_3D_file_txt_path = os.path.join(model_txt_path, 'points3D.txt')
-images_file_txt_path = os.path.join(model_txt_path, 'images.txt')
+manually_created_model_txt_path = os.path.join(base_path, 'txt')
+points_3D_file_txt_path = os.path.join(manually_created_model_txt_path, 'points3D.txt')
+images_file_txt_path = os.path.join(manually_created_model_txt_path, 'images.txt')
+output_model = os.path.join(base_path, 'output_opencv_sift_model')
 
 reconstruction = pycolmap.Reconstruction(model_path)
 db = COLMAPDatabase.connect(db_path)
 
 # export model to txt
-os.makedirs(model_txt_path, exist_ok = True)
-reconstruction.write_text(model_txt_path)
+os.makedirs(manually_created_model_txt_path, exist_ok = True)
+reconstruction.write_text(manually_created_model_txt_path)
 
 image_ids = get_all_images_ids_from_db(db)
 
 sift = cv2.SIFT_create()
 
-for image_id in tqdm(image_ids):
-    image_name = get_image_name_from_db_with_id(db, image_id)
-    image_file_path = os.path.join(images_path, image_name)
-    img = cv2.imread(image_file_path)
-    kps, des = sift.detectAndCompute(img,None)
-    kps_plain = []
-    dominantOrientations = countDominantOrientations(kps)
-    assert dominantOrientations.shape[0] == len(kps)
-    kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response, dominantOrientations[i,0]] for i in range(len(kps))]
-    kps_plain = np.array(kps_plain)
-
-    db.replace_keypoints(image_id, kps_plain)
-    db.replace_descriptors(image_id, des)
-
-db.delete_all_matches()
-db.delete_all_two_view_geometries()
-db.commit()
+# for image_id in tqdm(image_ids):
+#     image_name = get_image_name_from_db_with_id(db, image_id)
+#     image_file_path = os.path.join(images_path, image_name)
+#     img = cv2.imread(image_file_path)
+#     kps, des = sift.detectAndCompute(img,None)
+#     kps_plain = []
+#     dominantOrientations = countDominantOrientations(kps)
+#     assert dominantOrientations.shape[0] == len(kps)
+#     kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response, dominantOrientations[i,0]] for i in range(len(kps))]
+#     kps_plain = np.array(kps_plain)
+#
+#     db.replace_keypoints(image_id, kps_plain)
+#     db.replace_descriptors(image_id, des)
+#
+# db.delete_all_matches()
+# db.delete_all_two_view_geometries()
+# db.commit()
 
 empty_points_3D_txt_file(points_3D_file_txt_path)
 arrange_images_txt_file(images_file_txt_path)
 
 print("Done!")
+
+breakpoint()
+colmap.vocab_tree_matcher(db_path)
+colmap.point_triangulator(db_path, images_path, manually_created_model_txt_path, output_model)
 
 # old code
 #
