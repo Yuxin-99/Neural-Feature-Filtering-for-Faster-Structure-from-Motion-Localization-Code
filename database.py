@@ -119,14 +119,18 @@ class COLMAPDatabase(sqlite3.Connection):
         descriptors = np.ascontiguousarray(descriptors, np.uint8)
         self.execute("INSERT INTO descriptors VALUES (?, ?, ?, ?)", (image_id,) + descriptors.shape + (self.array_to_blob(descriptors),))
 
-    def update_keypoints(self, image_id, keypoints):
+    def replace_keypoints(self, image_id, keypoints):
         assert (len(keypoints.shape) == 2)
         assert (keypoints.shape[1] in [2, 4, 6, 7]) # I added 7 for match no match
 
-        breakpoint()
+        # delete first
+        self.execute("DELETE FROM keypoints WHERE image_id = " + "'" + str(image_id) + "'")
+        # insert again
         keypoints = np.asarray(keypoints, np.float32)
-        self.execute("UPDATE keypoints SET rows = " + "'" + str(keypoints.shape[0]) + "' ," + "cols = " + "'" + str(image_id) + "', " + "data = " + "'" + self.array_to_blob(keypoints) + "' WHERE image_id = " + "'" + str(image_id) + "'")
+        self.execute("INSERT INTO keypoints VALUES (?, ?, ?, ?)", (image_id,) + keypoints.shape + (self.array_to_blob(keypoints),))
 
-    def update_descriptors(self, image_id, descriptors):
+    def replace_descriptors(self, image_id, descriptors):
+        # delete first
+        self.execute("DELETE FROM descriptors WHERE image_id = " + "'" + str(image_id) + "'")
         descriptors = np.ascontiguousarray(descriptors, np.uint8)
-        self.execute("UPDATE descriptors SET rows = " + "'" + str(descriptors.shape[0]) + "', " + "data = " + "'" + self.array_to_blob(descriptors) + "' WHERE image_id = " + "'" + str(image_id) + "'")
+        self.execute("INSERT INTO descriptors VALUES (?, ?, ?, ?)", (image_id,) + descriptors.shape + (self.array_to_blob(descriptors),))

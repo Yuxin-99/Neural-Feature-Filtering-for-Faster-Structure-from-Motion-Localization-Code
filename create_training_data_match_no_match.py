@@ -61,9 +61,11 @@ for image_id in tqdm(image_ids):
     kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response, dominantOrientations[i,0]] for i in range(len(kps))]
     kps_plain = np.array(kps_plain)
 
-    db.update_keypoints(image_id, kps_plain)
+    db.replace_keypoints(image_id, kps_plain)
+    db.replace_descriptors(image_id, des)
 
-    breakpoint()
+breakpoint()
+db.commit()
 # extract opencv features
 # insert data in database
 
