@@ -14,10 +14,10 @@ import random
 from tqdm import tqdm
 from parameters import Parameters
 from point3D_loader import read_points3d_default
-from query_image import read_images_binary, get_all_images_ids_from_db
+from query_image import read_images_binary, get_all_images_ids_from_db, get_image_name_from_db_with_id
 
 base_path = sys.argv[1]
-db_path = os.path.join(base_path, 'databases.db')
+db_path = os.path.join(base_path, 'database.db')
 images_path = os.path.join(base_path, 'images')
 model_path = os.path.join(base_path, 'model/0')
 model_txt_path = os.path.join(base_path, 'txt')
@@ -29,7 +29,13 @@ db = COLMAPDatabase.connect(db_path)
 os.makedirs(model_txt_path, exist_ok = True)
 reconstruction.write_text(model_txt_path)
 
-image_ids = get_all_images_ids_from_db(db);
+image_ids = get_all_images_ids_from_db(db)
+
+for image_id in image_ids:
+    breakpoint()
+    image_name = get_image_name_from_db_with_id(db, image_id)
+# extract opencv features
+# insert data in database
 
 breakpoint()
 

@@ -280,6 +280,10 @@ def get_all_images_names_from_db(db):
     image_names = [image_names_tuple[0] for image_names_tuple in image_names_tuples]
     return image_names
 
+def get_image_name_from_db_with_id(db, image_id):
+    image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(image_id) + "'")
+    return image_name[0]
+
 def get_all_images_ids_from_db(db):
     image_ids = db.execute("SELECT id FROM images")
     image_ids_tuples = image_ids.fetchall()
