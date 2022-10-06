@@ -119,9 +119,8 @@ if(model == 'live' or model == 'gt'):
     with open(new_query_image_names_file_path, 'w') as f:
         for filename in glob.glob(images_path + '/**/*'):
             f.write(f"{filename}\n")
-    breakpoint()
     colmap.vocab_tree_matcher(db_path, new_query_image_names_file_path)
-else:
+else: #base
     colmap.vocab_tree_matcher(db_path)
 colmap.point_triangulator(db_path, images_path, manually_created_model_txt_path, output_model)
 
