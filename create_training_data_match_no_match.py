@@ -2,10 +2,10 @@
 # It will extract OpenCV features and insert them in colmaps database and run the triangulator again
 # I clear the old data, and keep the poses.
 # You will need to tun this on the CYENS machine as it has pycolmap and colmap installed
-# To start we need to copy base,live,gt to CYENS then run this script for each base,live,gt
+# To start we need to copy base,live,gt to CYENS then run this script for each base,live,gt ; (scp -r -P 11568 base live gt  alex@4.tcp.eu.ngrok.io:/home/alex/uni/models_for_match_no_match/CMU_slice_3/)
 # The output will be in output_opencv_sift_model_* for each model base,live,gt
 # Then you copy the output_opencv_sift_model_* and databases (base,live,gt) back to Bath servers (weatherwax)
-
+import glob
 import os
 import sys
 import cv2
@@ -52,6 +52,7 @@ def countDominantOrientations(keypoints):
     return domOrientations
 
 base_path = sys.argv[1]
+model = base_path.split("/")[-1]
 db_path = os.path.join(base_path, 'database.db')
 images_path = os.path.join(base_path, 'images')
 model_path = os.path.join(base_path, 'model/0')
@@ -59,8 +60,6 @@ manually_created_model_txt_path = os.path.join(base_path, 'txt')
 points_3D_file_txt_path = os.path.join(manually_created_model_txt_path, 'points3D.txt')
 images_file_txt_path = os.path.join(manually_created_model_txt_path, 'images.txt')
 output_model = os.path.join(base_path, 'output_opencv_sift_model')
-
-breakpoint()
 
 reconstruction = pycolmap.Reconstruction(model_path)
 db = COLMAPDatabase.connect(db_path)
@@ -94,7 +93,12 @@ db.commit()
 empty_points_3D_txt_file(points_3D_file_txt_path)
 arrange_images_txt_file(images_file_txt_path)
 
-colmap.vocab_tree_matcher(db_path)
+if(model == 'live' or model == 'gt'):
+    for filename in glob.glob(dir + 'session_*/*.jpg'):
+        breakpoint()
+    colmap.vocab_tree_matcher(db_path)
+else:
+    colmap.vocab_tree_matcher(db_path)
 colmap.point_triangulator(db_path, images_path, manually_created_model_txt_path, output_model)
 
 print("Done!")
