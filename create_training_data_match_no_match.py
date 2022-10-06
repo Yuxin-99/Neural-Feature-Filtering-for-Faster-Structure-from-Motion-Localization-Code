@@ -110,10 +110,13 @@ sift = cv2.SIFT_create()
 # empty_points_3D_txt_file(points_3D_file_txt_path)
 # arrange_images_txt_file(images_file_txt_path)
 
+new_query_image_names_file_path = os.path.join(base_path, 'query_name_new.txt')
 if(model == 'live' or model == 'gt'):
-    for filename in glob.glob(images_path + '/**/*'):
-        breakpoint()
-    colmap.vocab_tree_matcher(db_path)
+    with open(new_query_image_names_file_path, 'w') as f:
+        for filename in glob.glob(images_path + '/**/*'):
+            f.write(f"{filename}\n")
+    breakpoint()
+    colmap.vocab_tree_matcher(db_path, new_query_image_names_file_path)
 else:
     colmap.vocab_tree_matcher(db_path)
 colmap.point_triangulator(db_path, images_path, manually_created_model_txt_path, output_model)
