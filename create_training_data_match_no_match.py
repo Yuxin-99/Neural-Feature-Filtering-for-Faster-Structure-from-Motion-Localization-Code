@@ -5,6 +5,7 @@
 # To start we need to copy base,live,gt to CYENS then run this script for each base,live,gt ; (scp -r -P 11568 base live gt  alex@4.tcp.eu.ngrok.io:/home/alex/uni/models_for_match_no_match/CMU_slice_3/)
 # The output will be in output_opencv_sift_model_* for each model base,live,gt
 # Then you copy the output_opencv_sift_model_* and databases (base,live,gt) back to Bath servers (weatherwax)
+# Also as you run this file in turn, for base,live,gt you have to copy the database over from base to live to gt, each time the script finishes or reflect the new data
 import glob
 import os
 import sys
