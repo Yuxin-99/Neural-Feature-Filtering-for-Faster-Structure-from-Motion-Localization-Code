@@ -1,7 +1,10 @@
 # This file will aim to create the data for the RF model from Match no Match, MnM - (2020) paper
 # It will extract OpenCV features and insert them in colmaps database and run the triangulator again
 # I clear the old data, and keep the poses.
-# You will need to tun this on the CYENS machine as it has pycolmap installed
+# You will need to tun this on the CYENS machine as it has pycolmap and colmap installed
+# To start we need to copy base,live,gt to CYENS then run this script for each base,live,gt
+# The output will be in output_opencv_sift_model_* for each model base,live,gt
+# Then you copy the output_opencv_sift_model_* and databases (base,live,gt) back to Bath servers (weatherwax)
 
 import os
 import sys
@@ -57,6 +60,8 @@ points_3D_file_txt_path = os.path.join(manually_created_model_txt_path, 'points3
 images_file_txt_path = os.path.join(manually_created_model_txt_path, 'images.txt')
 output_model = os.path.join(base_path, 'output_opencv_sift_model')
 
+breakpoint()
+
 reconstruction = pycolmap.Reconstruction(model_path)
 db = COLMAPDatabase.connect(db_path)
 
@@ -89,11 +94,10 @@ db.commit()
 empty_points_3D_txt_file(points_3D_file_txt_path)
 arrange_images_txt_file(images_file_txt_path)
 
-print("Done!")
-
-breakpoint()
 colmap.vocab_tree_matcher(db_path)
 colmap.point_triangulator(db_path, images_path, manually_created_model_txt_path, output_model)
+
+print("Done!")
 
 # old code
 #
