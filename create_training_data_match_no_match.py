@@ -72,19 +72,20 @@ image_ids = get_all_images_ids_from_db(db)
 
 sift = cv2.SIFT_create()
 
+db.add_dominant_orientations_column()
+db.commit()
+
 for image_id in tqdm(image_ids):
     image_name = get_image_name_from_db_with_id(db, image_id)
     image_file_path = os.path.join(images_path, image_name)
     img = cv2.imread(image_file_path)
     kps, des = sift.detectAndCompute(img,None)
     kps_plain = []
-    dominantOrientations = countDominantOrientations(kps)
-    assert dominantOrientations.shape[0] == len(kps)
-    breakpoint()
-    kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response , dominantOrientations[i]] for i in range(len(kps))]
-    kps_plain = np.array(kps_plain)
+    dominant_orientations = countDominantOrientations(kps)
 
-    db.replace_keypoints(image_id, kps_plain)
+    kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] for i in range(len(kps))]
+    kps_plain = np.array(kps_plain)
+    db.replace_keypoints(image_id, kps_plain, dominant_orientations)
     db.replace_descriptors(image_id, des)
 
 db.delete_all_matches()

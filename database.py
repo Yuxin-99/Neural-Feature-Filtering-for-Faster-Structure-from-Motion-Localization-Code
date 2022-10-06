@@ -119,16 +119,22 @@ class COLMAPDatabase(sqlite3.Connection):
         descriptors = np.ascontiguousarray(descriptors, np.uint8)
         self.execute("INSERT INTO descriptors VALUES (?, ?, ?, ?)", (image_id,) + descriptors.shape + (self.array_to_blob(descriptors),))
 
-    def replace_keypoints(self, image_id, keypoints):
+    def add_dominant_orientations_column(self):
+        addColumn = "ALTER TABLE keypoints ADD COLUMN dominantOrientations BLOB"
+        self.execute(addColumn)
+
+    def replace_keypoints(self, image_id, keypoints, dominant_orientations):
         assert (len(keypoints.shape) == 2)
         assert (keypoints.shape[1] in [2, 4, 6])
+        assert dominant_orientations.shape[0] == len(keypoints)
 
         # delete first
         self.execute("DELETE FROM keypoints WHERE image_id = " + "'" + str(image_id) + "'")
         # insert again
         keypoints = np.asarray(keypoints, np.float32)
+        dominant_orientations = np.asarray(dominant_orientations, np.float32)
         breakpoint()
-        self.execute("INSERT INTO keypoints VALUES (?, ?, ?, ?)", (image_id,) + keypoints.shape + (self.array_to_blob(keypoints),))
+        self.execute("INSERT INTO keypoints VALUES (?, ?, ?, ?, ?)", (image_id,) + keypoints.shape + (self.array_to_blob(keypoints),) + (self.array_to_blob(dominant_orientations),))
 
     def replace_descriptors(self, image_id, descriptors):
         # delete first
