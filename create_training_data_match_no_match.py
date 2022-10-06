@@ -111,7 +111,7 @@ sift = cv2.SIFT_create()
 # arrange_images_txt_file(images_file_txt_path)
 
 if(model == 'live' or model == 'gt'):
-    for filename in glob.glob(images_path,recursive=True):
+    for filename in glob.glob(images_path + '/*'):
         breakpoint()
     colmap.vocab_tree_matcher(db_path)
 else:
