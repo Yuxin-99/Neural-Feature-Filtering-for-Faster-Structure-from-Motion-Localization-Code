@@ -19,7 +19,7 @@ import random
 from tqdm import tqdm
 from parameters import Parameters
 from point3D_loader import read_points3d_default
-from query_image import read_images_binary, get_all_images_ids_from_db, get_image_name_from_db_with_id
+from query_image import read_images_binary, get_valid_images_ids_from_db, get_image_name_from_db_with_id
 
 def empty_points_3D_txt_file(path):
     open(path, 'w').close()
@@ -73,7 +73,8 @@ db = COLMAPDatabase.connect(db_path)
 os.makedirs(manually_created_model_txt_path, exist_ok = True)
 reconstruction.write_text(manually_created_model_txt_path)
 
-image_ids = get_all_images_ids_from_db(db, query_image_names)
+image_ids = get_valid_images_ids_from_db(db, query_image_names)
+assert len(image_ids) == len(query_image_names)
 
 sift = cv2.SIFT_create()
 

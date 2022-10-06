@@ -284,19 +284,20 @@ def get_image_name_from_db_with_id(db, image_id):
     image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(image_id) + "'").fetchone()[0]
     return image_name
 
-def get_all_images_ids_from_db(db, query_image_names):
+def get_valid_images_ids_from_db(db, query_image_names):
     if(query_image_names == None):
         image_ids = db.execute("SELECT image_id FROM images")
         image_ids_tuples = image_ids.fetchall()
         image_ids = [image_id_tuple[0] for image_id_tuple in image_ids_tuples]
         return image_ids
     else:
+        valid_image_ids = []
         image_ids = db.execute("SELECT image_id, name FROM images")
         image_ids_tuples = image_ids.fetchall()
         for row in image_ids_tuples:
-            breakpoint()
-            image_ids = [image_id_tuple[0] for image_id_tuple in image_ids_tuples]
-        return image_ids
+            if (row[1] in query_image_names):
+                valid_image_ids.append(row[0])
+        return valid_image_ids
 
 def get_images_names_bin(images_bin_path):
     images_names = []
