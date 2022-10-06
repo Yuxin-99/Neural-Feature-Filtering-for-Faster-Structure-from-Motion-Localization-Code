@@ -80,7 +80,8 @@ for image_id in tqdm(image_ids):
     kps_plain = []
     dominantOrientations = countDominantOrientations(kps)
     assert dominantOrientations.shape[0] == len(kps)
-    kps_plain += [[kps[i].pt[0], kps[i].pt[1], [kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] , dominantOrientations[i]] for i in range(len(kps))]
+    breakpoint()
+    kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response , dominantOrientations[i]] for i in range(len(kps))]
     kps_plain = np.array(kps_plain)
 
     db.replace_keypoints(image_id, kps_plain)

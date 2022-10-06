@@ -127,8 +127,8 @@ class COLMAPDatabase(sqlite3.Connection):
         self.execute("DELETE FROM keypoints WHERE image_id = " + "'" + str(image_id) + "'")
         # insert again
         keypoints = np.asarray(keypoints, np.float32)
-        self.execute("INSERT INTO keypoints VALUES (?, ?, ?, ?)", (image_id,) + keypoints.shape + (self.array_to_blob(keypoints),))
         breakpoint()
+        self.execute("INSERT INTO keypoints VALUES (?, ?, ?, ?)", (image_id,) + keypoints.shape + (self.array_to_blob(keypoints),))
 
     def replace_descriptors(self, image_id, descriptors):
         # delete first
