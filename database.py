@@ -133,7 +133,6 @@ class COLMAPDatabase(sqlite3.Connection):
         # insert again
         keypoints = np.asarray(keypoints, np.float32)
         dominant_orientations = np.asarray(dominant_orientations, np.float32)
-        breakpoint()
         self.execute("INSERT INTO keypoints VALUES (?, ?, ?, ?, ?)", (image_id,) + keypoints.shape + (self.array_to_blob(keypoints),) + (self.array_to_blob(dominant_orientations),))
 
     def replace_descriptors(self, image_id, descriptors):

@@ -96,7 +96,7 @@ empty_points_3D_txt_file(points_3D_file_txt_path)
 arrange_images_txt_file(images_file_txt_path)
 
 if(model == 'live' or model == 'gt'):
-    for filename in glob.glob(dir + 'session_*/*.jpg'):
+    for filename in glob.glob(f'{images_path}, session_*/*.jpg'):
         breakpoint()
     colmap.vocab_tree_matcher(db_path)
 else:
