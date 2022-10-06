@@ -53,8 +53,10 @@ def countDominantOrientations(keypoints):
     return domOrientations
 
 base_path = sys.argv[1]
-model = base_path.split("/")[-1]
+match_no_match_db_path = sys.argv[2]
 db_path = os.path.join(base_path, 'database.db')
+shutil.copyfile(db_path, match_no_match_db_path)
+model = base_path.split("/")[-1]
 images_path = os.path.join(base_path, 'images')
 if(model == 'live' or model == 'gt'):
     model_path = os.path.join(base_path, 'model')
@@ -69,21 +71,23 @@ images_file_txt_path = os.path.join(manually_created_model_txt_path, 'images.txt
 output_model = os.path.join(base_path, 'output_opencv_sift_model')
 
 reconstruction = pycolmap.Reconstruction(model_path)
+
 db = COLMAPDatabase.connect(db_path)
+db_match_no_match = COLMAPDatabase.connect(match_no_match_db_path)
 
 # export model to txt
 os.makedirs(manually_created_model_txt_path, exist_ok = True)
 reconstruction.write_text(manually_created_model_txt_path)
 
-image_ids = get_valid_images_ids_from_db(db, query_image_names)
+image_ids = get_valid_images_ids_from_db(db_match_no_match, query_image_names)
 if query_image_names != None:
     assert len(image_ids) == len(query_image_names)
 
 sift = cv2.SIFT_create()
 
-if(db.dominant_orientations_column_exists() == False):
-    db.add_dominant_orientations_column()
-    db.commit()
+if(db_match_no_match.dominant_orientations_column_exists() == False):
+    db_match_no_match.add_dominant_orientations_column()
+    db_match_no_match.commit()
 
 if(model == 'live' or model == 'gt'):
     model_path = os.path.join(base_path, 'model')
@@ -91,7 +95,7 @@ else:
     model_path = os.path.join(base_path, 'model/0')
 
 for image_id in tqdm(image_ids):
-    image_name = get_image_name_from_db_with_id(db, image_id)
+    image_name = get_image_name_from_db_with_id(db_match_no_match, image_id)
     image_file_path = os.path.join(images_path, image_name)
     img = cv2.imread(image_file_path)
     kps, des = sift.detectAndCompute(img,None)
@@ -100,12 +104,12 @@ for image_id in tqdm(image_ids):
 
     kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] for i in range(len(kps))]
     kps_plain = np.array(kps_plain)
-    db.replace_keypoints(image_id, kps_plain, dominant_orientations)
-    db.replace_descriptors(image_id, des)
+    db_match_no_match.replace_keypoints(image_id, kps_plain, dominant_orientations)
+    db_match_no_match.replace_descriptors(image_id, des)
 
-db.delete_all_matches()
-db.delete_all_two_view_geometries()
-db.commit()
+db_match_no_match.delete_all_matches()
+db_match_no_match.delete_all_two_view_geometries()
+db_match_no_match.commit()
 
 empty_points_3D_txt_file(points_3D_file_txt_path)
 arrange_images_txt_file(images_file_txt_path)
@@ -115,16 +119,10 @@ if(model == 'live' or model == 'gt'):
     with open(new_query_image_names_file_path, 'w') as f:
         for filename in glob.glob(images_path + '/**/*'):
             f.write(f"{filename}\n")
-    colmap.vocab_tree_matcher(db_path, new_query_image_names_file_path)
+    colmap.vocab_tree_matcher(match_no_match_db_path, new_query_image_names_file_path)
 else: #base
-    colmap.vocab_tree_matcher(db_path)
-colmap.point_triangulator(db_path, images_path, manually_created_model_txt_path, output_model)
-
-if(model != 'gt'): #because at "gt" we don't need to copy anywhere
-    # copy the db after the feature matching / triangulation so the matches and two_view geometry table is updated
-    copy_db_to_path = sys.argv[2]  # where to copy the database (Don't copy to the same as you will lose data, i.e from base to live, you lose the live images)
-    print(f"Copying db..to {copy_db_to_path}")
-    shutil.copyfile(db_path, copy_db_to_path)
+    colmap.vocab_tree_matcher(match_no_match_db_path)
+colmap.point_triangulator(match_no_match_db_path, images_path, manually_created_model_txt_path, output_model)
 
 print("Done!")
 
