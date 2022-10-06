@@ -82,6 +82,7 @@ if(db.dominant_orientations_column_exists() == False):
 for image_id in tqdm(image_ids):
     image_name = get_image_name_from_db_with_id(db, image_id)
     image_file_path = os.path.join(images_path, image_name)
+    breakpoint()
     img = cv2.imread(image_file_path)
     kps, des = sift.detectAndCompute(img,None)
     kps_plain = []
