@@ -120,9 +120,11 @@ class COLMAPDatabase(sqlite3.Connection):
         self.execute("INSERT INTO descriptors VALUES (?, ?, ?, ?)", (image_id,) + descriptors.shape + (self.array_to_blob(descriptors),))
 
     def dominant_orientations_column_exists(self):
-        tables_sql = self.execute("PRAGMA table_info('keypoints');")
-        tables = self.execute(tables_sql)
-        breakpoint()
+        cols = self.execute("PRAGMA table_info('keypoints');").fetchall()
+        for col in cols:
+            if(col[1] == 'dominantOrientations'):
+                return True
+        return False
 
     def add_dominant_orientations_column(self):
         addColumn = "ALTER TABLE keypoints ADD COLUMN dominantOrientations BLOB"
