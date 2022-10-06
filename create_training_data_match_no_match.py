@@ -53,7 +53,6 @@ def countDominantOrientations(keypoints):
     return domOrientations
 
 base_path = sys.argv[1]
-copy_db_to_path = sys.argv[2] #where to copy the database
 model = base_path.split("/")[-1]
 db_path = os.path.join(base_path, 'database.db')
 images_path = os.path.join(base_path, 'images')
@@ -121,9 +120,11 @@ else: #base
     colmap.vocab_tree_matcher(db_path)
 colmap.point_triangulator(db_path, images_path, manually_created_model_txt_path, output_model)
 
-# copy the db after the feature matching / triangulation so the matches and two_view geometry table is updated
-print(f"Copying db..to {copy_db_to_path}")
-shutil.copyfile(db_path, copy_db_to_path)
+if(model != 'gt'): #because at "gt" we don't need to copy anywhere
+    # copy the db after the feature matching / triangulation so the matches and two_view geometry table is updated
+    copy_db_to_path = sys.argv[2]  # where to copy the database
+    print(f"Copying db..to {copy_db_to_path}")
+    shutil.copyfile(db_path, copy_db_to_path)
 
 print("Done!")
 
