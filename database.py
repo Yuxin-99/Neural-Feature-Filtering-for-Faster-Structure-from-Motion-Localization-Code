@@ -128,6 +128,7 @@ class COLMAPDatabase(sqlite3.Connection):
         # insert again
         keypoints = np.asarray(keypoints, np.float32)
         self.execute("INSERT INTO keypoints VALUES (?, ?, ?, ?)", (image_id,) + keypoints.shape + (self.array_to_blob(keypoints),))
+        breakpoint()
 
     def replace_descriptors(self, image_id, descriptors):
         # delete first
