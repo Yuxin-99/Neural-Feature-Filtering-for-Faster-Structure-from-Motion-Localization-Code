@@ -55,7 +55,10 @@ base_path = sys.argv[1]
 model = base_path.split("/")[-1]
 db_path = os.path.join(base_path, 'database.db')
 images_path = os.path.join(base_path, 'images')
-model_path = os.path.join(base_path, 'model/0')
+if(model == 'live' or model == 'gt'):
+    model_path = os.path.join(base_path, 'model')
+else:
+    model_path = os.path.join(base_path, 'model/0')
 manually_created_model_txt_path = os.path.join(base_path, 'txt')
 points_3D_file_txt_path = os.path.join(manually_created_model_txt_path, 'points3D.txt')
 images_file_txt_path = os.path.join(manually_created_model_txt_path, 'images.txt')
