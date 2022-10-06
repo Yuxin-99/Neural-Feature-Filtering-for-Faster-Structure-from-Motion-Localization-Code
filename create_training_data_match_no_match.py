@@ -68,10 +68,10 @@ os.makedirs(all_images_path, exist_ok = True)
 files = glob.iglob(os.path.join(base_images_path, "*.jpg"))
 for file in files:
     shutil.copy(file, all_images_path)
-files = glob.iglob(os.path.join(live_images_path, "/**/*.jpg"))
+files = glob.iglob(live_images_path + "/**/*.jpg")
 for file in files:
     shutil.copy(file, all_images_path)
-files = glob.iglob(os.path.join(gt_images_path, "/**/*.jpg"))
+files = glob.iglob(gt_images_path + "/**/*.jpg")
 for file in files:
     shutil.copy(file, all_images_path)
 
