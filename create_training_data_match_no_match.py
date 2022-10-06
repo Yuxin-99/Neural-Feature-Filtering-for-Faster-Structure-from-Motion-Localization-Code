@@ -65,9 +65,15 @@ gt_images_path = os.path.join(gt_data_path, 'images')
 all_images_path = os.path.join(base_path, 'images')
 
 os.makedirs(all_images_path, exist_ok = True)
-shutil.copyfile(base_images_path, all_images_path)
-shutil.copyfile(live_images_path, all_images_path)
-shutil.copyfile(gt_images_path, all_images_path)
+files = glob.iglob(os.path.join(base_images_path, "*.jpg"))
+for file in files:
+    shutil.copy(file, all_images_path)
+files = glob.iglob(os.path.join(live_images_path, "*.jpg"))
+for file in files:
+    shutil.copy(file, all_images_path)
+files = glob.iglob(os.path.join(gt_images_path, "*.jpg"))
+for file in files:
+    shutil.copy(file, all_images_path)
 
 exit()
 
