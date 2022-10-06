@@ -57,8 +57,10 @@ db_path = os.path.join(base_path, 'database.db')
 images_path = os.path.join(base_path, 'images')
 if(model == 'live' or model == 'gt'):
     model_path = os.path.join(base_path, 'model')
+    query_image_names = open(os.path.join(base_path, 'query_name.txt'), 'r').readlines() #this is to make sure the image name from the db is from live or gt images only
 else:
     model_path = os.path.join(base_path, 'model/0')
+    query_image_names = None
 manually_created_model_txt_path = os.path.join(base_path, 'txt')
 points_3D_file_txt_path = os.path.join(manually_created_model_txt_path, 'points3D.txt')
 images_file_txt_path = os.path.join(manually_created_model_txt_path, 'images.txt')
@@ -79,10 +81,16 @@ if(db.dominant_orientations_column_exists() == False):
     db.add_dominant_orientations_column()
     db.commit()
 
+if(model == 'live' or model == 'gt'):
+    model_path = os.path.join(base_path, 'model')
+else:
+    model_path = os.path.join(base_path, 'model/0')
+
 for image_id in tqdm(image_ids):
     image_name = get_image_name_from_db_with_id(db, image_id)
+    if ((model == 'live' or model == 'gt') and (image_name not in query_image_names)):
+        continue
     image_file_path = os.path.join(images_path, image_name)
-    breakpoint()
     img = cv2.imread(image_file_path)
     kps, des = sift.detectAndCompute(img,None)
     kps_plain = []
