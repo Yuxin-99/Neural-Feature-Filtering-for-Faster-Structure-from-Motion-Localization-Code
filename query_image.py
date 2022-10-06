@@ -295,7 +295,6 @@ def get_valid_images_ids_from_db(db, query_image_names):
         image_ids = db.execute("SELECT image_id, name FROM images")
         image_ids_tuples = image_ids.fetchall()
         for row in image_ids_tuples:
-            breakpoint()
             if (row[1] in query_image_names):
                 valid_image_ids.append(row[0])
         return valid_image_ids

@@ -58,6 +58,7 @@ images_path = os.path.join(base_path, 'images')
 if(model == 'live' or model == 'gt'):
     model_path = os.path.join(base_path, 'model')
     query_image_names = open(os.path.join(base_path, 'query_name.txt'), 'r').readlines() #this is to make sure the image name from the db is from live or gt images only
+    query_image_names = [query_image_name.strip() for query_image_name in query_image_names]
 else:
     model_path = os.path.join(base_path, 'model/0')
     query_image_names = None
