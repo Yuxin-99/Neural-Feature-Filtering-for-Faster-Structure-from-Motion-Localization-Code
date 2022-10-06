@@ -64,7 +64,7 @@ if(model == 'live' or model == 'gt'):
 else:
     model_path = os.path.join(base_path, 'model/0')
     query_image_names = None
-manually_created_model_txt_path = os.path.join(base_path, 'txt')
+manually_created_model_txt_path = os.path.join(base_path, 'manual_model_for_triangulation_txt')
 points_3D_file_txt_path = os.path.join(manually_created_model_txt_path, 'points3D.txt')
 images_file_txt_path = os.path.join(manually_created_model_txt_path, 'images.txt')
 output_model = os.path.join(base_path, 'output_opencv_sift_model')
