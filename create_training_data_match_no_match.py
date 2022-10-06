@@ -108,9 +108,6 @@ db.delete_all_matches()
 db.delete_all_two_view_geometries()
 db.commit()
 
-print(f"Copying db..to {copy_db_to_path}")
-shutil.copyfile(db_path, copy_db_to_path)
-
 empty_points_3D_txt_file(points_3D_file_txt_path)
 arrange_images_txt_file(images_file_txt_path)
 
@@ -123,6 +120,10 @@ if(model == 'live' or model == 'gt'):
 else: #base
     colmap.vocab_tree_matcher(db_path)
 colmap.point_triangulator(db_path, images_path, manually_created_model_txt_path, output_model)
+
+# copy the db after the feature matching / triangulation so the matches and two_view geometry table is updated
+print(f"Copying db..to {copy_db_to_path}")
+shutil.copyfile(db_path, copy_db_to_path)
 
 print("Done!")
 
