@@ -11,7 +11,7 @@ import os
 import sys
 import cv2
 import pycolmap
-
+import shutil
 import colmap
 from database import COLMAPDatabase
 from database import pair_id_to_image_ids
@@ -53,6 +53,7 @@ def countDominantOrientations(keypoints):
     return domOrientations
 
 base_path = sys.argv[1]
+copy_db_to_path = sys.argv[2] #where to copy the database
 model = base_path.split("/")[-1]
 db_path = os.path.join(base_path, 'database.db')
 images_path = os.path.join(base_path, 'images')
@@ -106,6 +107,9 @@ for image_id in tqdm(image_ids):
 db.delete_all_matches()
 db.delete_all_two_view_geometries()
 db.commit()
+
+print(f"Copying db..to {copy_db_to_path}")
+shutil.copyfile(db_path, copy_db_to_path)
 
 empty_points_3D_txt_file(points_3D_file_txt_path)
 arrange_images_txt_file(images_file_txt_path)
