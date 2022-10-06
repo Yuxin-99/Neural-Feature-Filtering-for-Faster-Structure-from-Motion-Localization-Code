@@ -52,6 +52,25 @@ def countDominantOrientations(keypoints):
                 domOrientations[k,0] = nDominants
     return domOrientations
 
+# move all images in one folder and use this script for all base , gt, live at once - will make your life easier
+base_path = sys.argv[1]
+
+base_data_path = os.path.join(base_path, 'base')
+live_data_path = os.path.join(base_path, 'live')
+gt_data_path = os.path.join(base_path, 'gt')
+
+base_images_path = os.path.join(base_data_path, 'images')
+live_images_path = os.path.join(live_data_path, 'images')
+gt_images_path = os.path.join(gt_data_path, 'images')
+all_images_path = os.path.join(base_path, 'images')
+
+os.makedirs(all_images_path, exist_ok = True)
+shutil.copyfile(base_images_path + "/*", all_images_path)
+shutil.copyfile(live_images_path + "/*", all_images_path)
+shutil.copyfile(gt_images_path + "/*", all_images_path)
+
+exit()
+
 base_path = sys.argv[1]
 match_no_match_db_path = sys.argv[2]
 db_path = os.path.join(base_path, 'database.db')
