@@ -74,7 +74,8 @@ os.makedirs(manually_created_model_txt_path, exist_ok = True)
 reconstruction.write_text(manually_created_model_txt_path)
 
 image_ids = get_valid_images_ids_from_db(db, query_image_names)
-assert len(image_ids) == len(query_image_names)
+if query_image_names != None:
+    assert len(image_ids) == len(query_image_names)
 
 sift = cv2.SIFT_create()
 
