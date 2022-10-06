@@ -122,7 +122,7 @@ colmap.point_triangulator(db_path, images_path, manually_created_model_txt_path,
 
 if(model != 'gt'): #because at "gt" we don't need to copy anywhere
     # copy the db after the feature matching / triangulation so the matches and two_view geometry table is updated
-    copy_db_to_path = sys.argv[2]  # where to copy the database
+    copy_db_to_path = sys.argv[2]  # where to copy the database (Don't copy to the same as you will lose data, i.e from base to live, you lose the live images)
     print(f"Copying db..to {copy_db_to_path}")
     shutil.copyfile(db_path, copy_db_to_path)
 
