@@ -72,8 +72,9 @@ image_ids = get_all_images_ids_from_db(db)
 
 sift = cv2.SIFT_create()
 
-db.add_dominant_orientations_column()
-db.commit()
+if(db.dominant_orientations_column_exists() == False):
+    db.add_dominant_orientations_column()
+    db.commit()
 
 for image_id in tqdm(image_ids):
     image_name = get_image_name_from_db_with_id(db, image_id)
