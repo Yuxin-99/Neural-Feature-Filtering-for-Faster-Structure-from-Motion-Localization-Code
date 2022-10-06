@@ -73,7 +73,7 @@ db = COLMAPDatabase.connect(db_path)
 os.makedirs(manually_created_model_txt_path, exist_ok = True)
 reconstruction.write_text(manually_created_model_txt_path)
 
-image_ids = get_all_images_ids_from_db(db)
+image_ids = get_all_images_ids_from_db(db, query_image_names)
 
 sift = cv2.SIFT_create()
 
@@ -88,8 +88,6 @@ else:
 
 for image_id in tqdm(image_ids):
     image_name = get_image_name_from_db_with_id(db, image_id)
-    if ((model == 'live' or model == 'gt') and (image_name not in query_image_names)):
-        continue
     image_file_path = os.path.join(images_path, image_name)
     img = cv2.imread(image_file_path)
     kps, des = sift.detectAndCompute(img,None)
