@@ -100,6 +100,7 @@ for model in tqdm(models):
 
     reconstruction = pycolmap.Reconstruction(model_path)
 
+    shutil.copy(db_path, match_no_match_db_path) #duplicate database
     db = COLMAPDatabase.connect(db_path)
     db_match_no_match = COLMAPDatabase.connect(match_no_match_db_path)
 
