@@ -94,9 +94,9 @@ for model in tqdm(models):
     if(model == 'live' or model == 'gt'):
         query_image_names = open(os.path.join(model_path, 'query_name.txt'), 'r').readlines() #this is to make sure the image name from the db is from live or gt images only
         query_image_names = [query_image_name.strip() for query_image_name in query_image_names]
-        colmap_model_path = os.path.join(base_path, 'model')
+        colmap_model_path = os.path.join(model_path, 'model')
     else:
-        colmap_model_path = os.path.join(base_path, 'model/0')
+        colmap_model_path = os.path.join(model_path, 'model/0')
         query_image_names = None
 
     reconstruction = pycolmap.Reconstruction(colmap_model_path)
