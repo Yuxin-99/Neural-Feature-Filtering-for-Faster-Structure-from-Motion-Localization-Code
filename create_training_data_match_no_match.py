@@ -76,7 +76,7 @@ for file in files:
     if (os.path.exists(file) == False):
         shutil.copy(file, all_images_path)
 
-models = ["base", "live", "gt"]
+models = ["live", "gt"]
 sift = cv2.SIFT_create()
 
 for model in tqdm(models):
@@ -94,11 +94,12 @@ for model in tqdm(models):
     if(model == 'live' or model == 'gt'):
         query_image_names = open(os.path.join(model_path, 'query_name.txt'), 'r').readlines() #this is to make sure the image name from the db is from live or gt images only
         query_image_names = [query_image_name.strip() for query_image_name in query_image_names]
+        colmap_model_path = os.path.join(base_path, 'model')
     else:
-        model_path = os.path.join(model_path, 'model/0')
+        colmap_model_path = os.path.join(base_path, 'model/0')
         query_image_names = None
 
-    reconstruction = pycolmap.Reconstruction(model_path)
+    reconstruction = pycolmap.Reconstruction(colmap_model_path)
 
     shutil.copy(db_path, match_no_match_db_path) #duplicate database
     db = COLMAPDatabase.connect(db_path)
@@ -115,11 +116,6 @@ for model in tqdm(models):
     if(db_match_no_match.dominant_orientations_column_exists() == False):
         db_match_no_match.add_dominant_orientations_column()
         db_match_no_match.commit()
-
-    if(model == 'live' or model == 'gt'):
-        colmap_model_path = os.path.join(base_path, 'model')
-    else:
-        colmap_model_path = os.path.join(base_path, 'model/0')
 
     for image_id in tqdm(image_ids):
         image_name = get_image_name_from_db_with_id(db_match_no_match, image_id) #or db here
