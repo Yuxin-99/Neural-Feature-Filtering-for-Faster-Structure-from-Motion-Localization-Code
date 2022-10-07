@@ -52,102 +52,104 @@ def countDominantOrientations(keypoints):
                 domOrientations[k,0] = nDominants
     return domOrientations
 
-# move all images in one folder and use this script for all base , gt, live at once - will make your life easier
-base_path = sys.argv[1]
-
-base_data_path = os.path.join(base_path, 'base')
-live_data_path = os.path.join(base_path, 'live')
-gt_data_path = os.path.join(base_path, 'gt')
-
-base_images_path = os.path.join(base_data_path, 'images')
-live_images_path = os.path.join(live_data_path, 'images')
-gt_images_path = os.path.join(gt_data_path, 'images')
+base_path = sys.argv[1] #/home/alex/uni/models_for_match_no_match/CMU_slice_3/
+model_base_path = os.path.join(base_path, "base")
+model_live_path = os.path.join(base_path, "live")
+model_gt_path = os.path.join(base_path, "gt")
+images_base_path = os.path.join(model_base_path, "images")
+images_live_path = os.path.join(model_live_path, "images")
+images_gt_path = os.path.join(model_gt_path, "images")
 all_images_path = os.path.join(base_path, 'images')
 
+# copy all images in one folder for feature extraction
 os.makedirs(all_images_path, exist_ok = True)
-files = glob.iglob(os.path.join(base_images_path, "*.jpg"))
+files = glob.iglob(os.path.join(images_base_path, "*.jpg"))
 for file in files:
-    shutil.copy(file, all_images_path)
-files = glob.iglob(live_images_path + "/**/*.jpg")
+    if(os.path.exists(file) == False):
+        shutil.copy(file, all_images_path)
+files = glob.iglob(images_live_path + "/**/*.jpg")
 for file in files:
-    shutil.copy(file, all_images_path)
-files = glob.iglob(gt_images_path + "/**/*.jpg")
+    if(os.path.exists(file) == False):
+        shutil.copy(file, all_images_path)
+files = glob.iglob(images_gt_path + "/**/*.jpg")
 for file in files:
-    shutil.copy(file, all_images_path)
+    if (os.path.exists(file) == False):
+        shutil.copy(file, all_images_path)
 
-exit()
-
-base_path = sys.argv[1]
-match_no_match_db_path = sys.argv[2]
-db_path = os.path.join(base_path, 'database.db')
-shutil.copyfile(db_path, match_no_match_db_path)
-model = base_path.split("/")[-1]
-images_path = os.path.join(base_path, 'images')
-if(model == 'live' or model == 'gt'):
-    model_path = os.path.join(base_path, 'model')
-    query_image_names = open(os.path.join(base_path, 'query_name.txt'), 'r').readlines() #this is to make sure the image name from the db is from live or gt images only
-    query_image_names = [query_image_name.strip() for query_image_name in query_image_names]
-else:
-    model_path = os.path.join(base_path, 'model/0')
-    query_image_names = None
-manually_created_model_txt_path = os.path.join(base_path, 'manual_model_for_triangulation_txt')
-points_3D_file_txt_path = os.path.join(manually_created_model_txt_path, 'points3D.txt')
-images_file_txt_path = os.path.join(manually_created_model_txt_path, 'images.txt')
-output_model = os.path.join(base_path, 'output_opencv_sift_model')
-
-reconstruction = pycolmap.Reconstruction(model_path)
-
-db = COLMAPDatabase.connect(db_path)
-db_match_no_match = COLMAPDatabase.connect(match_no_match_db_path)
-
-# export model to txt
-os.makedirs(manually_created_model_txt_path, exist_ok = True)
-reconstruction.write_text(manually_created_model_txt_path)
-
-image_ids = get_valid_images_ids_from_db(db_match_no_match, query_image_names)
-if query_image_names != None:
-    assert len(image_ids) == len(query_image_names)
-
+models = ["base", "live", "gt"]
 sift = cv2.SIFT_create()
 
-if(db_match_no_match.dominant_orientations_column_exists() == False):
-    db_match_no_match.add_dominant_orientations_column()
+for model in tqdm(models):
+    model_path = os.path.join(base_path, model)
+    model_images_path = os.path.join(model_path, "images")
+    match_no_match_db_path = os.path.join(model_path, 'match_no_match_database.db')
+    db_path = os.path.join(model_path, 'database.db')
+    manually_created_model_txt_path = os.path.join(model_path, 'empty_model_for_triangulation_txt') #the "empty model" that will be used to create "opencv_sift_model"
+    os.makedirs(manually_created_model_txt_path, exist_ok=True)
+    points_3D_file_txt_path = os.path.join(manually_created_model_txt_path, 'points3D.txt')
+    images_file_txt_path = os.path.join(manually_created_model_txt_path, 'images.txt')
+    output_model_path = os.path.join(model_path, 'output_opencv_sift_model')
+    os.makedirs(output_model_path, exist_ok=True)
+
+    if(model == 'live' or model == 'gt'):
+        query_image_names = open(os.path.join(model_path, 'query_name.txt'), 'r').readlines() #this is to make sure the image name from the db is from live or gt images only
+        query_image_names = [query_image_name.strip() for query_image_name in query_image_names]
+    else:
+        model_path = os.path.join(model_path, 'model/0')
+        query_image_names = None
+
+    reconstruction = pycolmap.Reconstruction(model_path)
+
+    db = COLMAPDatabase.connect(db_path)
+    db_match_no_match = COLMAPDatabase.connect(match_no_match_db_path)
+
+    # export model to txt
+    reconstruction.write_text(manually_created_model_txt_path)
+
+    image_ids = get_valid_images_ids_from_db(db_match_no_match, query_image_names)
+    if query_image_names != None:
+        print(f'query_image_names no. is: {len(query_image_names)}')
+        assert len(image_ids) == len(query_image_names)
+
+    if(db_match_no_match.dominant_orientations_column_exists() == False):
+        db_match_no_match.add_dominant_orientations_column()
+        db_match_no_match.commit()
+
+    if(model == 'live' or model == 'gt'):
+        colmap_model_path = os.path.join(base_path, 'model')
+    else:
+        colmap_model_path = os.path.join(base_path, 'model/0')
+
+    for image_id in tqdm(image_ids):
+        image_name = get_image_name_from_db_with_id(db_match_no_match, image_id) #or db here
+        image_file_path = os.path.join(all_images_path, image_name)
+        img = cv2.imread(image_file_path)
+        kps, des = sift.detectAndCompute(img,None)
+        kps_plain = []
+        dominant_orientations = countDominantOrientations(kps)
+
+        kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] for i in range(len(kps))]
+        kps_plain = np.array(kps_plain)
+        db_match_no_match.replace_keypoints(image_id, kps_plain, dominant_orientations)
+        db_match_no_match.replace_descriptors(image_id, des)
+
+    db_match_no_match.delete_all_matches()
+    db_match_no_match.delete_all_two_view_geometries()
     db_match_no_match.commit()
 
-if(model == 'live' or model == 'gt'):
-    model_path = os.path.join(base_path, 'model')
-else:
-    model_path = os.path.join(base_path, 'model/0')
+    empty_points_3D_txt_file(points_3D_file_txt_path)
+    arrange_images_txt_file(images_file_txt_path)
 
-for image_id in tqdm(image_ids):
-    image_name = get_image_name_from_db_with_id(db_match_no_match, image_id)
-    image_file_path = os.path.join(images_path, image_name)
-    img = cv2.imread(image_file_path)
-    kps, des = sift.detectAndCompute(img,None)
-    kps_plain = []
-    dominant_orientations = countDominantOrientations(kps)
+    new_query_image_names_file_path = os.path.join(model_path, 'query_name_new.txt') #new will contain absolute paths
+    if(model == 'live' or model == 'gt'):
+        with open(new_query_image_names_file_path, 'w') as f:
+            for filename in glob.glob(model_images_path + '/**/*'):
+                f.write(f"{filename}\n")
+        colmap.vocab_tree_matcher(match_no_match_db_path, new_query_image_names_file_path)
+    else: #base
+        colmap.vocab_tree_matcher(match_no_match_db_path)
 
-    kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] for i in range(len(kps))]
-    kps_plain = np.array(kps_plain)
-    db_match_no_match.replace_keypoints(image_id, kps_plain, dominant_orientations)
-    db_match_no_match.replace_descriptors(image_id, des)
-
-db_match_no_match.delete_all_matches()
-db_match_no_match.delete_all_two_view_geometries()
-db_match_no_match.commit()
-
-empty_points_3D_txt_file(points_3D_file_txt_path)
-arrange_images_txt_file(images_file_txt_path)
-
-new_query_image_names_file_path = os.path.join(base_path, 'query_name_new.txt')
-if(model == 'live' or model == 'gt'):
-    with open(new_query_image_names_file_path, 'w') as f:
-        for filename in glob.glob(images_path + '/**/*'):
-            f.write(f"{filename}\n")
-    colmap.vocab_tree_matcher(match_no_match_db_path, new_query_image_names_file_path)
-else: #base
-    colmap.vocab_tree_matcher(match_no_match_db_path)
-colmap.point_triangulator(match_no_match_db_path, images_path, manually_created_model_txt_path, output_model)
+    colmap.point_triangulator(match_no_match_db_path, model_images_path, manually_created_model_txt_path, output_model_path)
 
 print("Done!")
 

@@ -282,6 +282,8 @@ def get_all_images_names_from_db(db):
 
 def get_image_name_from_db_with_id(db, image_id):
     image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(image_id) + "'").fetchone()[0]
+    if(len(image_name.split("/")) > 1):
+        return image_name.split("/")[1]
     return image_name
 
 def get_valid_images_ids_from_db(db, query_image_names):
