@@ -74,7 +74,7 @@ for file in files:
     if (os.path.exists(file) == False):
         shutil.copy(file, all_images_path)
 
-models = ["base", "live", "gt"] #modify this if you want to run for base, live, or gt
+models = [ "live", "gt"] #modify this if you want to run for base, live, or gt
 sift = cv2.SIFT_create()
 
 for model in tqdm(models):
@@ -137,7 +137,7 @@ for model in tqdm(models):
         with open(new_query_image_names_file_path, 'w') as f:
             for filename in glob.glob(model_images_path + '/**/*'):
                 f.write(f"{filename}\n")
-        colmap.vocab_tree_matcher(match_no_match_db_path, new_query_image_names_file_path)
+        # colmap.vocab_tree_matcher(match_no_match_db_path, new_query_image_names_file_path)
     else: #base
         colmap.vocab_tree_matcher(match_no_match_db_path)
 
