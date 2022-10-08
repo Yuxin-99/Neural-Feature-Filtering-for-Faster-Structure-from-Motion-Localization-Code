@@ -3,9 +3,7 @@
 # I clear the old data, and keep the poses.
 # You will need to tun this on the CYENS machine as it has pycolmap and colmap installed
 # To start we need to copy base,live,gt to CYENS then run this script for each base,live,gt ; (scp -r -P 11568 base live gt  alex@4.tcp.eu.ngrok.io:/home/alex/uni/models_for_match_no_match/CMU_slice_3/)
-# The output will be in output_opencv_sift_model_* for each model base,live,gt
-# Then you copy the output_opencv_sift_model_* and databases (base,live,gt) back to Bath servers (weatherwax)
-# Also as you run this file in turn, for base,live,gt you have to copy the database over from base to live to gt, each time the script finishes or reflect the new data
+
 import glob
 import os
 import sys
@@ -84,29 +82,29 @@ for model in tqdm(models):
     model_images_path = os.path.join(model_path, "images")
     match_no_match_db_path = os.path.join(model_path, 'match_no_match_database.db')
     db_path = os.path.join(model_path, 'database.db')
-    manually_created_model_txt_path = os.path.join(model_path, 'empty_model_for_triangulation_txt') #the "empty model" that will be used to create "opencv_sift_model"
-    os.makedirs(manually_created_model_txt_path, exist_ok=True)
-    points_3D_file_txt_path = os.path.join(manually_created_model_txt_path, 'points3D.txt')
-    images_file_txt_path = os.path.join(manually_created_model_txt_path, 'images.txt')
     output_model_path = os.path.join(model_path, 'output_opencv_sift_model')
     os.makedirs(output_model_path, exist_ok=True)
 
-    if(model == 'live' or model == 'gt'):
+    if(model == 'live' or model == 'gt'): #only register images
         query_image_names = open(os.path.join(model_path, 'query_name.txt'), 'r').readlines() #this is to make sure the image name from the db is from live or gt images only
         query_image_names = [query_image_name.strip() for query_image_name in query_image_names]
         colmap_model_path = os.path.join(model_path, 'model')
-    else:
+    else: #base, triangulate opecv sift model
+        manually_created_model_txt_path = os.path.join(model_path,'empty_model_for_triangulation_txt')  # the "empty model" that will be used to create "opencv_sift_model"
+        os.makedirs(manually_created_model_txt_path, exist_ok=True)
+        #  set up files as stated online in COLMAP's faq
+        points_3D_file_txt_path = os.path.join(manually_created_model_txt_path, 'points3D.txt')
+        images_file_txt_path = os.path.join(manually_created_model_txt_path, 'images.txt')
+        empty_points_3D_txt_file(points_3D_file_txt_path)
+        arrange_images_txt_file(images_file_txt_path)
         colmap_model_path = os.path.join(model_path, 'model/0')
+        reconstruction = pycolmap.Reconstruction(colmap_model_path)
+        # export model to txt
+        reconstruction.write_text(manually_created_model_txt_path)
         query_image_names = None
 
-    reconstruction = pycolmap.Reconstruction(colmap_model_path)
-
-    shutil.copy(db_path, match_no_match_db_path) #duplicate database
-    db = COLMAPDatabase.connect(db_path)
+    shutil.copy(db_path, match_no_match_db_path) #duplicate database, as we are inserting opecv sift features in the new one
     db_match_no_match = COLMAPDatabase.connect(match_no_match_db_path)
-
-    # export model to txt
-    reconstruction.write_text(manually_created_model_txt_path)
 
     image_ids = get_valid_images_ids_from_db(db_match_no_match, query_image_names)
     if query_image_names != None:
@@ -115,14 +113,14 @@ for model in tqdm(models):
 
     if(db_match_no_match.dominant_orientations_column_exists() == False):
         db_match_no_match.add_dominant_orientations_column()
-        db_match_no_match.commit()
+        db_match_no_match.commit() #we need to commit here
 
     for image_id in tqdm(image_ids):
         image_name = get_image_name_from_db_with_id(db_match_no_match, image_id) #or db here
         image_file_path = os.path.join(all_images_path, image_name)
         img = cv2.imread(image_file_path)
-        kps, des = sift.detectAndCompute(img,None)
         kps_plain = []
+        kps, des = sift.detectAndCompute(img,None)
         dominant_orientations = countDominantOrientations(kps)
 
         kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] for i in range(len(kps))]
@@ -134,10 +132,7 @@ for model in tqdm(models):
     db_match_no_match.delete_all_two_view_geometries()
     db_match_no_match.commit()
 
-    empty_points_3D_txt_file(points_3D_file_txt_path)
-    arrange_images_txt_file(images_file_txt_path)
-
-    new_query_image_names_file_path = os.path.join(model_path, 'query_name_new.txt') #new will contain absolute paths
+    new_query_image_names_file_path = os.path.join(model_path, f'query_name_{model}.txt') #new will contain absolute paths
     if(model == 'live' or model == 'gt'):
         with open(new_query_image_names_file_path, 'w') as f:
             for filename in glob.glob(model_images_path + '/**/*'):
@@ -146,7 +141,12 @@ for model in tqdm(models):
     else: #base
         colmap.vocab_tree_matcher(match_no_match_db_path)
 
-    colmap.point_triangulator(match_no_match_db_path, model_images_path, manually_created_model_txt_path, output_model_path)
+    if (model == 'live' or model == 'gt'):
+        base_model_path = os.path.join(model_path, 'model/0')
+        # registering images on the base model, using the opencv sift features and saving the opencv sift live model in the output_model_path
+        colmap.image_registrator(match_no_match_db_path, base_model_path, output_model_path)
+    else: #base, here we create to model to start with (with opencv sift)
+        colmap.point_triangulator(match_no_match_db_path, model_images_path, manually_created_model_txt_path, output_model_path)
 
 print("Done!")
 
