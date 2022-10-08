@@ -115,6 +115,7 @@ for model in tqdm(models):
         db_match_no_match.add_dominant_orientations_column()
         db_match_no_match.commit() #we need to commit here
 
+    print("Extracting data from images..")
     for image_id in tqdm(image_ids):
         image_name = get_image_name_from_db_with_id(db_match_no_match, image_id) #or db here
         image_file_path = os.path.join(all_images_path, image_name)
@@ -132,16 +133,18 @@ for model in tqdm(models):
     db_match_no_match.delete_all_two_view_geometries()
     db_match_no_match.commit()
 
+    print("Matching..")
     new_query_image_names_file_path = os.path.join(model_path, f'query_name_{model}.txt') #new will contain absolute paths
     if(model == 'live' or model == 'gt'):
         with open(new_query_image_names_file_path, 'w') as f:
             for filename in glob.glob(model_images_path + '/**/*'):
                 f.write(f"{filename}\n")
-        # colmap.vocab_tree_matcher(match_no_match_db_path, new_query_image_names_file_path)
+        colmap.vocab_tree_matcher(match_no_match_db_path, new_query_image_names_file_path)
     else: #base
         colmap.vocab_tree_matcher(match_no_match_db_path)
 
     if (model == 'live' or model == 'gt'):
+        print("Registering images on base model..")
         base_model_path = os.path.join(model_path, 'model/0')
         # registering images on the base model, using the opencv sift features and saving the opencv sift live model in the output_model_path
         colmap.image_registrator(match_no_match_db_path, base_model_path, output_model_path)
