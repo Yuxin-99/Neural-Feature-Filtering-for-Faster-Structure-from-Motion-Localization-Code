@@ -74,7 +74,7 @@ for file in files:
     if (os.path.exists(file) == False):
         shutil.copy(file, all_images_path)
 
-models = ["live", "gt"]
+models = ["base", "live", "gt"] #modify this if you want to run for base, live, or gt
 sift = cv2.SIFT_create()
 
 for model in tqdm(models):
