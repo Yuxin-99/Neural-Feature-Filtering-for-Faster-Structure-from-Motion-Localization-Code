@@ -58,9 +58,19 @@ images_base_path = os.path.join(model_base_path, "images")
 images_live_path = os.path.join(model_live_path, "images")
 images_gt_path = os.path.join(model_gt_path, "images")
 
+# New TODO:
+# look at cmu_sparse_reconstuctor.py, for help
 
+# Note: use images names from database to locate them for opencv feature extraction
 
+# 1 - replace base model features with openCV sift
+# 2 - triangulate the base model -> base opencv sift model
 
+# 3 - replace the live database's features with opencv sift features (for all images, base + live)
+# 4 - register the new live images against the base opencv sift model
+
+# 5 - replace the gt database's features with opencv sift features (for all images, base + live + gt)
+# 6 - register the new gt images against the live opencv sift model
 
 # Note: 09/10/2022 Code inefficient below
 
