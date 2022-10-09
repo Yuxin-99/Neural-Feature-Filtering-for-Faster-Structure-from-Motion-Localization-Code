@@ -139,7 +139,8 @@ for model in tqdm(models):
         with open(new_query_image_names_file_path, 'w') as f:
             for filename in glob.glob(model_images_path + '/**/*'):
                 f.write(f"{filename}\n")
-        colmap.exhaustive_matcher(match_no_match_db_path, new_query_image_names_file_path)
+        breakpoint()
+        colmap.vocab_tree_matcher(match_no_match_db_path, new_query_image_names_file_path)
     else: #base
         colmap.vocab_tree_matcher(match_no_match_db_path)
 
