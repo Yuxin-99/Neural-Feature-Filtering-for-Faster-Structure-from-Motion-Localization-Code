@@ -57,113 +57,118 @@ model_gt_path = os.path.join(base_path, "gt")
 images_base_path = os.path.join(model_base_path, "images")
 images_live_path = os.path.join(model_live_path, "images")
 images_gt_path = os.path.join(model_gt_path, "images")
-all_images_path = os.path.join(base_path, 'images')
+
+
+
+
+
+# Note: 09/10/2022 Code inefficient below
 
 # copy all images in one folder for feature extraction
-os.makedirs(all_images_path, exist_ok = True)
-files = glob.iglob(os.path.join(images_base_path, "*.jpg"))
-for file in files:
-    if(os.path.exists(file) == False):
-        shutil.copy(file, all_images_path)
-files = glob.iglob(images_live_path + "/**/*.jpg")
-for file in files:
-    if(os.path.exists(file) == False):
-        shutil.copy(file, all_images_path)
-files = glob.iglob(images_gt_path + "/**/*.jpg")
-for file in files:
-    if (os.path.exists(file) == False):
-        shutil.copy(file, all_images_path)
+# os.makedirs(all_images_path, exist_ok = True)
+# files = glob.iglob(os.path.join(images_base_path, "*.jpg"))
+# for file in files:
+#     if(os.path.exists(file) == False):
+#         shutil.copy(file, all_images_path)
+# files = glob.iglob(images_live_path + "/**/*.jpg")
+# for file in files:
+#     if(os.path.exists(file) == False):
+#         shutil.copy(file, all_images_path)
+# files = glob.iglob(images_gt_path + "/**/*.jpg")
+# for file in files:
+#     if (os.path.exists(file) == False):
+#         shutil.copy(file, all_images_path)
 
-models = [ "live", "gt"] #modify this if you want to run for base, live, or gt
-sift = cv2.SIFT_create()
-
-for model in tqdm(models):
-    model_path = os.path.join(base_path, model)
-    model_images_path = os.path.join(model_path, "images")
-    match_no_match_db_path = os.path.join(model_path, 'match_no_match_database.db')
-    db_path = os.path.join(model_path, 'database.db')
-    base_db_path = os.path.join(base_path, 'base/database.db')
-    output_model_path = os.path.join(model_path, 'output_opencv_sift_model')
-    os.makedirs(output_model_path, exist_ok=True)
-
-    if(model == 'live' or model == 'gt'): #only register images
-        query_image_names = open(os.path.join(model_path, 'query_name.txt'), 'r').readlines() #this is to make sure the image name from the db is from live or gt images only, use the original .txt file
-        query_image_names = [query_image_name.strip() for query_image_name in query_image_names]
-        colmap_model_path = os.path.join(model_path, 'model')
-    else: #base, triangulate opecv sift model
-        manually_created_model_txt_path = os.path.join(model_path,'empty_model_for_triangulation_txt')  # the "empty model" that will be used to create "opencv_sift_model"
-        os.makedirs(manually_created_model_txt_path, exist_ok=True)
-        #  set up files as stated online in COLMAP's faq
-        points_3D_file_txt_path = os.path.join(manually_created_model_txt_path, 'points3D.txt')
-        images_file_txt_path = os.path.join(manually_created_model_txt_path, 'images.txt')
-        empty_points_3D_txt_file(points_3D_file_txt_path)
-        arrange_images_txt_file(images_file_txt_path)
-        colmap_model_path = os.path.join(model_path, 'model/0')
-        reconstruction = pycolmap.Reconstruction(colmap_model_path)
-        # export model to txt
-        reconstruction.write_text(manually_created_model_txt_path)
-        query_image_names = None
-
-    # TODO: 09/10/2022, This is a mess. run triangulation for base, then break the loop and write seperate methods for live and gt
-    # also make sure you use the new base opencv sift model to register live images
-    #  recopy the data files from server here
-
-    shutil.copy(base_db_path, match_no_match_db_path)
-    db_match_no_match = COLMAPDatabase.connect(match_no_match_db_path)
-
-    # image_ids = get_valid_images_ids_from_db(db_match_no_match, query_image_names)
-    # if query_image_names != None:
-    #     print(f'query_image_names no. is: {len(query_image_names)}')
-    #     assert len(image_ids) == len(query_image_names)
-
-    if(db_match_no_match.dominant_orientations_column_exists() == False):
-        db_match_no_match.add_dominant_orientations_column()
-        db_match_no_match.commit() #we need to commit here
-
-    print("Extracting data from images..")
-    image_names = ['img_01314_c0_1288106344867943us.jpg', 'img_01426_c0_1288106355199722us.jpg', 'img_01397_c0_1288106352400127us.jpg']
-    for i in range(227,229,1):
-        print(i)
-        image_name = image_names[i-227] #or db here
-        image_file_path = os.path.join(all_images_path, image_name)
-        img = cv2.imread(image_file_path)
-        kps_plain = []
-        kps, des = sift.detectAndCompute(img,None)
-        dominant_orientations = countDominantOrientations(kps)
-
-        kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] for i in range(len(kps))]
-        kps_plain = np.array(kps_plain)
-        db_match_no_match.replace_keypoints(i, kps_plain, dominant_orientations)
-        db_match_no_match.replace_descriptors(i, des)
-        db_match_no_match.commit()
-        breakpoint()
-
-    db_match_no_match.delete_all_matches()
-    db_match_no_match.delete_all_two_view_geometries()
-    db_match_no_match.commit()
-
-    print("Matching..")
-    new_query_image_names_file_path = os.path.join(model_path, f'query_name_{model}.txt') #new will contain absolute paths
-    if(model == 'live' or model == 'gt'):
-        with open(new_query_image_names_file_path, 'w') as f:
-            for filename in glob.glob(model_images_path + '/**/*'):
-                f.write(f"{filename}\n")
-        breakpoint()
-        colmap.vocab_tree_matcher(match_no_match_db_path, new_query_image_names_file_path)
-    else: #base
-        colmap.vocab_tree_matcher(match_no_match_db_path)
-
-    if (model == 'live' or model == 'gt'):
-        print("Registering images on base model..")
-        base_model_path = os.path.join(base_path, 'base/output_opencv_sift_model')
-        # registering images on the base model, using the opencv sift features and saving the opencv sift live model in the output_model_path
-        breakpoint()
-        colmap.image_registrator(match_no_match_db_path, base_model_path, output_model_path)
-    else: #base, here we create to model to start with (with opencv sift)
-        colmap.point_triangulator(match_no_match_db_path, model_images_path, manually_created_model_txt_path, output_model_path)
-
-    db_match_no_match.close()
-print("Done!")
+# models = [ "live", "gt"] #modify this if you want to run for base, live, or gt
+# sift = cv2.SIFT_create()
+#
+# for model in tqdm(models):
+#     model_path = os.path.join(base_path, model)
+#     model_images_path = os.path.join(model_path, "images")
+#     match_no_match_db_path = os.path.join(model_path, 'match_no_match_database.db')
+#     db_path = os.path.join(model_path, 'database.db')
+#     base_db_path = os.path.join(base_path, 'base/database.db')
+#     output_model_path = os.path.join(model_path, 'output_opencv_sift_model')
+#     os.makedirs(output_model_path, exist_ok=True)
+#
+#     if(model == 'live' or model == 'gt'): #only register images
+#         query_image_names = open(os.path.join(model_path, 'query_name.txt'), 'r').readlines() #this is to make sure the image name from the db is from live or gt images only, use the original .txt file
+#         query_image_names = [query_image_name.strip() for query_image_name in query_image_names]
+#         colmap_model_path = os.path.join(model_path, 'model')
+#     else: #base, triangulate opecv sift model
+#         manually_created_model_txt_path = os.path.join(model_path,'empty_model_for_triangulation_txt')  # the "empty model" that will be used to create "opencv_sift_model"
+#         os.makedirs(manually_created_model_txt_path, exist_ok=True)
+#         #  set up files as stated online in COLMAP's faq
+#         points_3D_file_txt_path = os.path.join(manually_created_model_txt_path, 'points3D.txt')
+#         images_file_txt_path = os.path.join(manually_created_model_txt_path, 'images.txt')
+#         empty_points_3D_txt_file(points_3D_file_txt_path)
+#         arrange_images_txt_file(images_file_txt_path)
+#         colmap_model_path = os.path.join(model_path, 'model/0')
+#         reconstruction = pycolmap.Reconstruction(colmap_model_path)
+#         # export model to txt
+#         reconstruction.write_text(manually_created_model_txt_path)
+#         query_image_names = None
+#
+#     # TODO: 09/10/2022, This is a mess. run triangulation for base, then break the loop and write seperate methods for live and gt
+#     # also make sure you use the new base opencv sift model to register live images
+#     #  recopy the data files from server here
+#
+#     shutil.copy(base_db_path, match_no_match_db_path)
+#     db_match_no_match = COLMAPDatabase.connect(match_no_match_db_path)
+#
+#     # image_ids = get_valid_images_ids_from_db(db_match_no_match, query_image_names)
+#     # if query_image_names != None:
+#     #     print(f'query_image_names no. is: {len(query_image_names)}')
+#     #     assert len(image_ids) == len(query_image_names)
+#
+#     if(db_match_no_match.dominant_orientations_column_exists() == False):
+#         db_match_no_match.add_dominant_orientations_column()
+#         db_match_no_match.commit() #we need to commit here
+#
+#     print("Extracting data from images..")
+#     image_names = ['img_01314_c0_1288106344867943us.jpg', 'img_01426_c0_1288106355199722us.jpg', 'img_01397_c0_1288106352400127us.jpg']
+#     for i in range(227,229,1):
+#         print(i)
+#         image_name = image_names[i-227] #or db here
+#         image_file_path = os.path.join(all_images_path, image_name)
+#         img = cv2.imread(image_file_path)
+#         kps_plain = []
+#         kps, des = sift.detectAndCompute(img,None)
+#         dominant_orientations = countDominantOrientations(kps)
+#
+#         kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] for i in range(len(kps))]
+#         kps_plain = np.array(kps_plain)
+#         db_match_no_match.replace_keypoints(i, kps_plain, dominant_orientations)
+#         db_match_no_match.replace_descriptors(i, des)
+#         db_match_no_match.commit()
+#         breakpoint()
+#
+#     db_match_no_match.delete_all_matches()
+#     db_match_no_match.delete_all_two_view_geometries()
+#     db_match_no_match.commit()
+#
+#     print("Matching..")
+#     new_query_image_names_file_path = os.path.join(model_path, f'query_name_{model}.txt') #new will contain absolute paths
+#     if(model == 'live' or model == 'gt'):
+#         with open(new_query_image_names_file_path, 'w') as f:
+#             for filename in glob.glob(model_images_path + '/**/*'):
+#                 f.write(f"{filename}\n")
+#         breakpoint()
+#         colmap.vocab_tree_matcher(match_no_match_db_path, new_query_image_names_file_path)
+#     else: #base
+#         colmap.vocab_tree_matcher(match_no_match_db_path)
+#
+#     if (model == 'live' or model == 'gt'):
+#         print("Registering images on base model..")
+#         base_model_path = os.path.join(base_path, 'base/output_opencv_sift_model')
+#         # registering images on the base model, using the opencv sift features and saving the opencv sift live model in the output_model_path
+#         breakpoint()
+#         colmap.image_registrator(match_no_match_db_path, base_model_path, output_model_path)
+#     else: #base, here we create to model to start with (with opencv sift)
+#         colmap.point_triangulator(match_no_match_db_path, model_images_path, manually_created_model_txt_path, output_model_path)
+#
+#     db_match_no_match.close()
+# print("Done!")
 
 # old code
 #
