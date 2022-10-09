@@ -82,7 +82,7 @@ for model in tqdm(models):
     model_images_path = os.path.join(model_path, "images")
     match_no_match_db_path = os.path.join(model_path, 'match_no_match_database.db')
     db_path = os.path.join(model_path, 'database.db')
-    base_db_path = os.path.join(model_path, 'base/database.db')
+    base_db_path = os.path.join(base_path, 'base/database.db')
     output_model_path = os.path.join(model_path, 'output_opencv_sift_model')
     os.makedirs(output_model_path, exist_ok=True)
 
