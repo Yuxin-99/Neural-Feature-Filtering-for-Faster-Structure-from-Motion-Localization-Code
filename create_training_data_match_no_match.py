@@ -147,6 +147,7 @@ for model in tqdm(models):
         print("Registering images on base model..")
         base_model_path = os.path.join(model_path, 'model/0')
         # registering images on the base model, using the opencv sift features and saving the opencv sift live model in the output_model_path
+        breakpoint()
         colmap.image_registrator(match_no_match_db_path, base_model_path, output_model_path)
     else: #base, here we create to model to start with (with opencv sift)
         colmap.point_triangulator(match_no_match_db_path, model_images_path, manually_created_model_txt_path, output_model_path)
