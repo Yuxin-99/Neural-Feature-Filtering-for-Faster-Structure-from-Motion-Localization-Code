@@ -129,9 +129,9 @@ for model in tqdm(models):
     #     db_match_no_match.replace_keypoints(image_id, kps_plain, dominant_orientations)
     #     db_match_no_match.replace_descriptors(image_id, des)
     #
-    # db_match_no_match.delete_all_matches()
-    # db_match_no_match.delete_all_two_view_geometries()
-    # db_match_no_match.commit()
+    db_match_no_match.delete_all_matches()
+    db_match_no_match.delete_all_two_view_geometries()
+    db_match_no_match.commit()
 
     print("Matching..")
     new_query_image_names_file_path = os.path.join(model_path, f'query_name_{model}.txt') #new will contain absolute paths
