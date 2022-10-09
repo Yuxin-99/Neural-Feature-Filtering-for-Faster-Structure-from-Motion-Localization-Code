@@ -133,25 +133,26 @@ for model in tqdm(models):
     # db_match_no_match.delete_all_two_view_geometries()
     # db_match_no_match.commit()
 
-    # print("Matching..")
-    # new_query_image_names_file_path = os.path.join(model_path, f'query_name_{model}.txt') #new will contain absolute paths
-    # if(model == 'live' or model == 'gt'):
-    #     with open(new_query_image_names_file_path, 'w') as f:
-    #         for filename in glob.glob(model_images_path + '/**/*'):
-    #             f.write(f"{filename}\n")
-    #     colmap.vocab_tree_matcher(match_no_match_db_path, new_query_image_names_file_path)
-    # else: #base
-    #     colmap.vocab_tree_matcher(match_no_match_db_path)
+    print("Matching..")
+    new_query_image_names_file_path = os.path.join(model_path, f'query_name_{model}.txt') #new will contain absolute paths
+    if(model == 'live' or model == 'gt'):
+        with open(new_query_image_names_file_path, 'w') as f:
+            for filename in glob.glob(model_images_path + '/**/*'):
+                f.write(f"{filename}\n")
+        colmap.exhaustive_matcher(match_no_match_db_path, new_query_image_names_file_path)
+    else: #base
+        colmap.vocab_tree_matcher(match_no_match_db_path)
 
     if (model == 'live' or model == 'gt'):
         print("Registering images on base model..")
-        base_model_path = os.path.join(model_path, 'model/0')
+        base_model_path = os.path.join(base_path, 'base/model/0')
         # registering images on the base model, using the opencv sift features and saving the opencv sift live model in the output_model_path
         breakpoint()
         colmap.image_registrator(match_no_match_db_path, base_model_path, output_model_path)
     else: #base, here we create to model to start with (with opencv sift)
         colmap.point_triangulator(match_no_match_db_path, model_images_path, manually_created_model_txt_path, output_model_path)
 
+db_match_no_match.close()
 print("Done!")
 
 # old code
