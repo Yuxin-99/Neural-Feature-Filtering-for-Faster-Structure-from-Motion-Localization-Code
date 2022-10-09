@@ -146,7 +146,7 @@ for model in tqdm(models):
 
     if (model == 'live' or model == 'gt'):
         print("Registering images on base model..")
-        base_model_path = os.path.join(base_path, 'base/model/0')
+        base_model_path = os.path.join(base_path, 'base/output_opencv_sift_model')
         # registering images on the base model, using the opencv sift features and saving the opencv sift live model in the output_model_path
         breakpoint()
         colmap.image_registrator(match_no_match_db_path, base_model_path, output_model_path)
