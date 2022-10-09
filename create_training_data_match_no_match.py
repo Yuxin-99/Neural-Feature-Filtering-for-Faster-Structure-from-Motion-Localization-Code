@@ -103,7 +103,7 @@ for model in tqdm(models):
         reconstruction.write_text(manually_created_model_txt_path)
         query_image_names = None
 
-    shutil.copy(db_path, match_no_match_db_path) #duplicate database, as we are inserting opecv sift features in the new one
+    # shutil.copy(db_path, match_no_match_db_path) #duplicate database, as we are inserting opecv sift features in the new one
     db_match_no_match = COLMAPDatabase.connect(match_no_match_db_path)
 
     image_ids = get_valid_images_ids_from_db(db_match_no_match, query_image_names)
