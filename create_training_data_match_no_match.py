@@ -152,7 +152,7 @@ for model in tqdm(models):
     else: #base, here we create to model to start with (with opencv sift)
         colmap.point_triangulator(match_no_match_db_path, model_images_path, manually_created_model_txt_path, output_model_path)
 
-db_match_no_match.close()
+    db_match_no_match.close()
 print("Done!")
 
 # old code
