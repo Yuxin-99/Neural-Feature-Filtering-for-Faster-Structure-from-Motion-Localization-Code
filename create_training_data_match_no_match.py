@@ -111,37 +111,37 @@ for model in tqdm(models):
         print(f'query_image_names no. is: {len(query_image_names)}')
         assert len(image_ids) == len(query_image_names)
 
-    if(db_match_no_match.dominant_orientations_column_exists() == False):
-        db_match_no_match.add_dominant_orientations_column()
-        db_match_no_match.commit() #we need to commit here
+    # if(db_match_no_match.dominant_orientations_column_exists() == False):
+    #     db_match_no_match.add_dominant_orientations_column()
+    #     db_match_no_match.commit() #we need to commit here
 
-    print("Extracting data from images..")
-    for image_id in tqdm(image_ids):
-        image_name = get_image_name_from_db_with_id(db_match_no_match, image_id) #or db here
-        image_file_path = os.path.join(all_images_path, image_name)
-        img = cv2.imread(image_file_path)
-        kps_plain = []
-        kps, des = sift.detectAndCompute(img,None)
-        dominant_orientations = countDominantOrientations(kps)
+    # print("Extracting data from images..")
+    # for image_id in tqdm(image_ids):
+    #     image_name = get_image_name_from_db_with_id(db_match_no_match, image_id) #or db here
+    #     image_file_path = os.path.join(all_images_path, image_name)
+    #     img = cv2.imread(image_file_path)
+    #     kps_plain = []
+    #     kps, des = sift.detectAndCompute(img,None)
+    #     dominant_orientations = countDominantOrientations(kps)
+    #
+    #     kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] for i in range(len(kps))]
+    #     kps_plain = np.array(kps_plain)
+    #     db_match_no_match.replace_keypoints(image_id, kps_plain, dominant_orientations)
+    #     db_match_no_match.replace_descriptors(image_id, des)
+    #
+    # db_match_no_match.delete_all_matches()
+    # db_match_no_match.delete_all_two_view_geometries()
+    # db_match_no_match.commit()
 
-        kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] for i in range(len(kps))]
-        kps_plain = np.array(kps_plain)
-        db_match_no_match.replace_keypoints(image_id, kps_plain, dominant_orientations)
-        db_match_no_match.replace_descriptors(image_id, des)
-
-    db_match_no_match.delete_all_matches()
-    db_match_no_match.delete_all_two_view_geometries()
-    db_match_no_match.commit()
-
-    print("Matching..")
-    new_query_image_names_file_path = os.path.join(model_path, f'query_name_{model}.txt') #new will contain absolute paths
-    if(model == 'live' or model == 'gt'):
-        with open(new_query_image_names_file_path, 'w') as f:
-            for filename in glob.glob(model_images_path + '/**/*'):
-                f.write(f"{filename}\n")
-        colmap.vocab_tree_matcher(match_no_match_db_path, new_query_image_names_file_path)
-    else: #base
-        colmap.vocab_tree_matcher(match_no_match_db_path)
+    # print("Matching..")
+    # new_query_image_names_file_path = os.path.join(model_path, f'query_name_{model}.txt') #new will contain absolute paths
+    # if(model == 'live' or model == 'gt'):
+    #     with open(new_query_image_names_file_path, 'w') as f:
+    #         for filename in glob.glob(model_images_path + '/**/*'):
+    #             f.write(f"{filename}\n")
+    #     colmap.vocab_tree_matcher(match_no_match_db_path, new_query_image_names_file_path)
+    # else: #base
+    #     colmap.vocab_tree_matcher(match_no_match_db_path)
 
     if (model == 'live' or model == 'gt'):
         print("Registering images on base model..")
