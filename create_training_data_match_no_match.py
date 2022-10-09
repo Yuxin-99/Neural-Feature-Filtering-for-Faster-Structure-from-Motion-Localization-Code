@@ -82,11 +82,12 @@ for model in tqdm(models):
     model_images_path = os.path.join(model_path, "images")
     match_no_match_db_path = os.path.join(model_path, 'match_no_match_database.db')
     db_path = os.path.join(model_path, 'database.db')
+    base_db_path = os.path.join(model_path, 'base/database.db')
     output_model_path = os.path.join(model_path, 'output_opencv_sift_model')
     os.makedirs(output_model_path, exist_ok=True)
 
     if(model == 'live' or model == 'gt'): #only register images
-        query_image_names = open(os.path.join(model_path, 'query_name.txt'), 'r').readlines() #this is to make sure the image name from the db is from live or gt images only
+        query_image_names = open(os.path.join(model_path, 'query_name.txt'), 'r').readlines() #this is to make sure the image name from the db is from live or gt images only, use the original .txt file
         query_image_names = [query_image_name.strip() for query_image_name in query_image_names]
         colmap_model_path = os.path.join(model_path, 'model')
     else: #base, triangulate opecv sift model
@@ -103,32 +104,39 @@ for model in tqdm(models):
         reconstruction.write_text(manually_created_model_txt_path)
         query_image_names = None
 
-    # shutil.copy(db_path, match_no_match_db_path) #duplicate database, as we are inserting opecv sift features in the new one
+    # TODO: 09/10/2022, This is a mess. run triangulation for base, then break the loop and write seperate methods for live and gt
+    # also make sure you use the new base opencv sift model to register live images
+    #  recopy the data files from server here
+
+    shutil.copy(base_db_path, match_no_match_db_path)
     db_match_no_match = COLMAPDatabase.connect(match_no_match_db_path)
 
-    image_ids = get_valid_images_ids_from_db(db_match_no_match, query_image_names)
-    if query_image_names != None:
-        print(f'query_image_names no. is: {len(query_image_names)}')
-        assert len(image_ids) == len(query_image_names)
+    # image_ids = get_valid_images_ids_from_db(db_match_no_match, query_image_names)
+    # if query_image_names != None:
+    #     print(f'query_image_names no. is: {len(query_image_names)}')
+    #     assert len(image_ids) == len(query_image_names)
 
-    # if(db_match_no_match.dominant_orientations_column_exists() == False):
-    #     db_match_no_match.add_dominant_orientations_column()
-    #     db_match_no_match.commit() #we need to commit here
+    if(db_match_no_match.dominant_orientations_column_exists() == False):
+        db_match_no_match.add_dominant_orientations_column()
+        db_match_no_match.commit() #we need to commit here
 
-    # print("Extracting data from images..")
-    # for image_id in tqdm(image_ids):
-    #     image_name = get_image_name_from_db_with_id(db_match_no_match, image_id) #or db here
-    #     image_file_path = os.path.join(all_images_path, image_name)
-    #     img = cv2.imread(image_file_path)
-    #     kps_plain = []
-    #     kps, des = sift.detectAndCompute(img,None)
-    #     dominant_orientations = countDominantOrientations(kps)
-    #
-    #     kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] for i in range(len(kps))]
-    #     kps_plain = np.array(kps_plain)
-    #     db_match_no_match.replace_keypoints(image_id, kps_plain, dominant_orientations)
-    #     db_match_no_match.replace_descriptors(image_id, des)
-    #
+    print("Extracting data from images..")
+    image_names = ['img_01314_c0_1288106344867943us.jpg', 'img_01426_c0_1288106355199722us.jpg', 'img_01397_c0_1288106352400127us.jpg']
+    for i in range(227,229,1):
+        print(i)
+        breakpoint()
+        image_name = image_names[i-227] #or db here
+        image_file_path = os.path.join(all_images_path, image_name)
+        img = cv2.imread(image_file_path)
+        kps_plain = []
+        kps, des = sift.detectAndCompute(img,None)
+        dominant_orientations = countDominantOrientations(kps)
+
+        kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] for i in range(len(kps))]
+        kps_plain = np.array(kps_plain)
+        db_match_no_match.replace_keypoints(i, kps_plain, dominant_orientations)
+        db_match_no_match.replace_descriptors(i, des)
+
     db_match_no_match.delete_all_matches()
     db_match_no_match.delete_all_two_view_geometries()
     db_match_no_match.commit()
