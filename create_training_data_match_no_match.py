@@ -124,7 +124,6 @@ for model in tqdm(models):
     image_names = ['img_01314_c0_1288106344867943us.jpg', 'img_01426_c0_1288106355199722us.jpg', 'img_01397_c0_1288106352400127us.jpg']
     for i in range(227,229,1):
         print(i)
-        breakpoint()
         image_name = image_names[i-227] #or db here
         image_file_path = os.path.join(all_images_path, image_name)
         img = cv2.imread(image_file_path)
@@ -136,6 +135,8 @@ for model in tqdm(models):
         kps_plain = np.array(kps_plain)
         db_match_no_match.replace_keypoints(i, kps_plain, dominant_orientations)
         db_match_no_match.replace_descriptors(i, des)
+        db_match_no_match.commit()
+        breakpoint()
 
     db_match_no_match.delete_all_matches()
     db_match_no_match.delete_all_two_view_geometries()
