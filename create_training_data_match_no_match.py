@@ -66,15 +66,15 @@ images_gt_path = os.path.join(model_gt_path, "images")
 # 1 - replace base model features with openCV sift
 manually_created_model_txt_path = os.path.join(model_base_path,'empty_model_for_triangulation_txt')  # the "empty model" that will be used to create "opencv_sift_model"
 os.makedirs(manually_created_model_txt_path, exist_ok=True)
-#  set up files as stated online in COLMAP's faq
-points_3D_file_txt_path = os.path.join(manually_created_model_txt_path, 'points3D.txt')
-images_file_txt_path = os.path.join(manually_created_model_txt_path, 'images.txt')
-empty_points_3D_txt_file(points_3D_file_txt_path)
-arrange_images_txt_file(images_file_txt_path)
+# set up files as stated online in COLMAP's faq
 colmap_model_path = os.path.join(model_base_path, 'model/0')
 reconstruction = pycolmap.Reconstruction(colmap_model_path)
 # export model to txt
 reconstruction.write_text(manually_created_model_txt_path)
+points_3D_file_txt_path = os.path.join(manually_created_model_txt_path, 'points3D.txt')
+images_file_txt_path = os.path.join(manually_created_model_txt_path, 'images.txt')
+empty_points_3D_txt_file(points_3D_file_txt_path)
+arrange_images_txt_file(images_file_txt_path)
 
 # 2 - triangulate the base model -> base opencv sift model
 opencv_sift_base_model_path = os.path.join(model_base_path, 'output_opencv_sift_model')
