@@ -87,7 +87,7 @@ if(base_db.dominant_orientations_column_exists() == False):
     base_db.commit() #we need to commit here
 
 print("Extracting data from images..")
-for image_name in tdqm(image_names):
+for image_name in tqdm(image_names):
     image_file_path = os.path.join(images_base_path, image_name)
     img = cv2.imread(image_file_path)
     kps_plain = []
