@@ -18,7 +18,7 @@ import random
 from tqdm import tqdm
 from parameters import Parameters
 from point3D_loader import read_points3d_default
-from query_image import read_images_binary, get_image_name_from_db_with_id, get_all_images_names_from_db
+from query_image import read_images_binary, get_image_name_from_db_with_id, get_all_images_names_from_db, get_image_id
 
 
 def empty_points_3D_txt_file(path):
@@ -96,8 +96,9 @@ for image_name in image_names:
 
     kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] for i in range(len(kps))]
     kps_plain = np.array(kps_plain)
-    base_db.replace_keypoints(image_name, kps_plain, dominant_orientations)
-    base_db.replace_descriptors(image_name, des)
+    image_id = get_image_id(base_db, image_name)
+    base_db.replace_keypoints(image_id, kps_plain, dominant_orientations)
+    base_db.replace_descriptors(image_id, des)
     base_db.commit()
 
 base_db.delete_all_matches()

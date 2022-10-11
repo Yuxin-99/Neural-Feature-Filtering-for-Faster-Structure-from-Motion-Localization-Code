@@ -130,23 +130,23 @@ class COLMAPDatabase(sqlite3.Connection):
         addColumn = "ALTER TABLE keypoints ADD COLUMN dominantOrientations BLOB"
         self.execute(addColumn)
 
-    def replace_keypoints(self, image_name, keypoints, dominant_orientations):
+    def replace_keypoints(self, image_id, keypoints, dominant_orientations):
         assert (len(keypoints.shape) == 2)
         assert (keypoints.shape[1] in [2, 4, 6])
         assert dominant_orientations.shape[0] == len(keypoints)
 
         # delete first
-        self.execute("DELETE FROM keypoints WHERE image_name = " + "'" + str(image_name) + "'")
+        self.execute("DELETE FROM keypoints WHERE image_id = " + "'" + str(image_id) + "'")
         # insert again
         keypoints = np.asarray(keypoints, np.float32)
         dominant_orientations = np.asarray(dominant_orientations, np.float32)
-        self.execute("INSERT INTO keypoints VALUES (?, ?, ?, ?, ?)", (image_name,) + keypoints.shape + (self.array_to_blob(keypoints),) + (self.array_to_blob(dominant_orientations),))
+        self.execute("INSERT INTO keypoints VALUES (?, ?, ?, ?, ?)", (image_id,) + keypoints.shape + (self.array_to_blob(keypoints),) + (self.array_to_blob(dominant_orientations),))
 
-    def replace_descriptors(self, image_name, descriptors):
+    def replace_descriptors(self, image_id, descriptors):
         # delete first
-        self.execute("DELETE FROM descriptors WHERE image_id = " + "'" + str(image_name) + "'")
+        self.execute("DELETE FROM descriptors WHERE image_id = " + "'" + str(image_id) + "'")
         descriptors = np.ascontiguousarray(descriptors, np.uint8)
-        self.execute("INSERT INTO descriptors VALUES (?, ?, ?, ?)", (image_name,) + descriptors.shape + (self.array_to_blob(descriptors),))
+        self.execute("INSERT INTO descriptors VALUES (?, ?, ?, ?)", (image_id,) + descriptors.shape + (self.array_to_blob(descriptors),))
 
     def delete_all_matches(self):
         self.execute("DELETE FROM matches")
