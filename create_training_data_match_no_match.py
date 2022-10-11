@@ -18,7 +18,7 @@ import random
 from tqdm import tqdm
 from parameters import Parameters
 from point3D_loader import read_points3d_default
-from query_image import read_images_binary, get_valid_images_ids_from_db, get_image_name_from_db_with_id, get_all_images_names_from_db
+from query_image import read_images_binary, get_image_name_from_db_with_id, get_all_images_names_from_db
 
 
 def empty_points_3D_txt_file(path):
