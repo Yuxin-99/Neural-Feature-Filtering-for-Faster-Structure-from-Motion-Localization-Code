@@ -18,7 +18,8 @@ import random
 from tqdm import tqdm
 from parameters import Parameters
 from point3D_loader import read_points3d_default
-from query_image import read_images_binary, get_valid_images_ids_from_db, get_image_name_from_db_with_id
+from query_image import read_images_binary, get_valid_images_ids_from_db, get_image_name_from_db_with_id, get_all_images_names_from_db
+
 
 def empty_points_3D_txt_file(path):
     open(path, 'w').close()
@@ -57,6 +58,7 @@ model_gt_path = os.path.join(base_path, "gt")
 images_base_path = os.path.join(model_base_path, "images")
 images_live_path = os.path.join(model_live_path, "images")
 images_gt_path = os.path.join(model_gt_path, "images")
+sift = cv2.SIFT_create()
 
 # New TODO:
 # look at cmu_sparse_reconstuctor.py, for help
@@ -75,11 +77,40 @@ points_3D_file_txt_path = os.path.join(manually_created_model_txt_path, 'points3
 images_file_txt_path = os.path.join(manually_created_model_txt_path, 'images.txt')
 empty_points_3D_txt_file(points_3D_file_txt_path)
 arrange_images_txt_file(images_file_txt_path)
+base_db_path = os.path.join(model_base_path, 'database.db')
+
+base_db = COLMAPDatabase.connect(base_db_path)
+image_names = get_all_images_names_from_db(base_db)
+
+if(base_db.dominant_orientations_column_exists() == False):
+    base_db.add_dominant_orientations_column()
+    base_db.commit() #we need to commit here
+
+print("Extracting data from images..")
+for image_name in image_names:
+    image_file_path = os.path.join(images_base_path, image_name)
+    img = cv2.imread(image_file_path)
+    kps_plain = []
+    kps, des = sift.detectAndCompute(img,None)
+    dominant_orientations = countDominantOrientations(kps)
+
+    kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] for i in range(len(kps))]
+    kps_plain = np.array(kps_plain)
+    base_db.replace_keypoints(image_name, kps_plain, dominant_orientations)
+    base_db.replace_descriptors(image_name, des)
+    base_db.commit()
+
+base_db.delete_all_matches()
+base_db.delete_all_two_view_geometries()
+base_db.commit()
+
+colmap.vocab_tree_matcher(base_db)
 
 # 2 - triangulate the base model -> base opencv sift model
 opencv_sift_base_model_path = os.path.join(model_base_path, 'output_opencv_sift_model')
-colmap.point_triangulator(os.path.join(model_base_path, 'database.db'),
-                          images_base_path, manually_created_model_txt_path, opencv_sift_base_model_path)
+colmap.point_triangulator(base_db_path, images_base_path, manually_created_model_txt_path, opencv_sift_base_model_path)
+
+print('Base Model done!')
 
 # 3 - replace the live database's features with opencv sift features (for all images, base + live)
 # 4 - register the new live images against the base opencv sift model
