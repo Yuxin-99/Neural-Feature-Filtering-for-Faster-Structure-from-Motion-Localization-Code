@@ -82,30 +82,31 @@ base_db_path = os.path.join(model_base_path, 'database.db')
 base_db = COLMAPDatabase.connect(base_db_path)
 image_names = get_all_images_names_from_db(base_db)
 
-if(base_db.dominant_orientations_column_exists() == False):
-    base_db.add_dominant_orientations_column()
-    base_db.commit() #we need to commit here
+# if(base_db.dominant_orientations_column_exists() == False):
+#     base_db.add_dominant_orientations_column()
+#     base_db.commit() #we need to commit here
+#
+# print("Extracting data from images..")
+# for image_name in tqdm(image_names):
+#     image_file_path = os.path.join(images_base_path, image_name)
+#     img = cv2.imread(image_file_path)
+#     kps_plain = []
+#     kps, des = sift.detectAndCompute(img,None)
+#     dominant_orientations = countDominantOrientations(kps)
+#
+#     kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] for i in range(len(kps))]
+#     kps_plain = np.array(kps_plain)
+#     image_id = get_image_id(base_db, image_name)
+#     base_db.replace_keypoints(image_id, kps_plain, dominant_orientations)
+#     base_db.replace_descriptors(image_id, des)
+#     base_db.commit()
+#
+# base_db.delete_all_matches()
+# base_db.delete_all_two_view_geometries()
+# base_db.commit()
 
-print("Extracting data from images..")
-for image_name in tqdm(image_names):
-    image_file_path = os.path.join(images_base_path, image_name)
-    img = cv2.imread(image_file_path)
-    kps_plain = []
-    kps, des = sift.detectAndCompute(img,None)
-    dominant_orientations = countDominantOrientations(kps)
-
-    kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] for i in range(len(kps))]
-    kps_plain = np.array(kps_plain)
-    image_id = get_image_id(base_db, image_name)
-    base_db.replace_keypoints(image_id, kps_plain, dominant_orientations)
-    base_db.replace_descriptors(image_id, des)
-    base_db.commit()
-
-base_db.delete_all_matches()
-base_db.delete_all_two_view_geometries()
-base_db.commit()
-
-colmap.vocab_tree_matcher(base_db)
+print("Matching -> at base model")
+colmap.vocab_tree_matcher(base_db_path)
 
 # 2 - triangulate the base model -> base opencv sift model
 opencv_sift_base_model_path = os.path.join(model_base_path, 'output_opencv_sift_model')
