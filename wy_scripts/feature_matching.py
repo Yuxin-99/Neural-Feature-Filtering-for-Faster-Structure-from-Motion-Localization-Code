@@ -25,7 +25,7 @@ def get_queryDescriptors(db, image_id):
     query_image_descriptors_data = query_image_descriptors_data.reshape([descs_rows, 128])
 
     row_sums = query_image_descriptors_data.sum(axis=1)
-    query_image_descriptors_data = query_image_descriptors_data / row_sums[:, np.newaxis]
+    # query_image_descriptors_data = query_image_descriptors_data / row_sums[:, np.newaxis]
     queryDescriptors = query_image_descriptors_data.astype(np.float32)
     return queryDescriptors
 
@@ -44,9 +44,6 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, ra
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
         query_image = query_images[i]
-        if verbose:
-            print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image, end="\r")
-
         image_id = get_image_id(db, query_image)
         # keypoints data
         keypoints_xy = get_keypoints_xy(db, image_id)
@@ -85,7 +82,9 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, ra
 
         matches[query_image] = np.array(good_matches)
         matches_sum.append(len(good_matches))
-        print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", good match: " + str(len(good_matches)), end="\r")
+        if verbose:
+            print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image +
+                  ", good match: " + str(len(good_matches)), end="\r")
 
     if verbose:
         print()
