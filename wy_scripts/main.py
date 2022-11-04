@@ -8,16 +8,14 @@ from feature_matching import feature_matcher_wrapper
 from get_points_3D_mean_desc import compute_avg_desc
 from parameters import Parameters
 from pose_estimator import do_pose_estimation
+from pose_evaluator import evaluate_est_pose
 from read_model import read_points3D_binary, get_points3D_xyz
 
-
-# python3 main.py ../CMU-models/sparse/points3D.bin ../CMU-models/query2.db ../CMU-models/undistorted_query_imgs 0
-# （Total matches: 151090, no of images 1824. Average matches per image: 82.8344298245614)
 
 # python3 main.py ../CMU-models/sparse/points3D.bin ../CMU-models/query_models/undistorted_query.db ../CMU-models/undistorted_query_imgs 1
 #  (Total matches: 664518, no of images 1824. Average matches per image: 364.31907894736844)
 
-# python3 main.py ../slice7/sparse/points3D.bin ../slice7/query7.db ../slice7/query 1
+# python3 main.py ../Dataset/slice7 0
 
 
 def main():
@@ -75,6 +73,8 @@ def main():
         print("Pose estimating is done!")
 
     # compute the error metrics for the estimated poses
+    gt_from_model = sys.argv[2] == "1"
+    evaluate_est_pose(rt_poses, gt_from_model, params)
 
 
 if __name__ == "__main__":
