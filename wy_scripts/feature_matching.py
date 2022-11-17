@@ -1,5 +1,8 @@
 import cv2
+import matplotlib.pyplot as plt
+import matplotlib.transforms as transforms
 import numpy as np
+import time
 
 from itertools import chain
 
@@ -36,18 +39,31 @@ def get_image_id(db, query_image):
     return image_id
 
 
+def get_camera_matrix(db, query_img):
+    camera_id = db.execute("SELECT camera_id FROM images WHERE name = " + "'" + query_img + "'")
+    camera_id = str(camera_id.fetchone()[0])
+    camera_params = db.execute("SELECT params FROM cameras WHERE camera_id = " + "'" + camera_id + "'")
+    camera_params = camera_params.fetchone()[0]
+    camera_data = db.blob_to_array(camera_params, np.float32)
+    return camera_data
+
+
 def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, verbose=False, points_scores_array=None):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
+    matching_time = {}
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
+        start_time = time.perf_counter()
         query_image = query_images[i]
         image_id = get_image_id(db, query_image)
         # keypoints data
         keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
+
+        matrix = get_camera_matrix(db, query_image)
 
         matcher = cv2.BFMatcher()       # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
@@ -80,11 +96,14 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, ra
                 match_data = list(chain(*match_data))
                 good_matches.append(match_data)
 
+        end_time = time.perf_counter()
+        elapsed_time = end_time - start_time
+        matching_time[query_image] = elapsed_time
         matches[query_image] = np.array(good_matches)
         matches_sum.append(len(good_matches))
         if verbose:
             print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image +
-                  ", good match: " + str(len(good_matches)), end="\r")
+                  ", good match: " + str(len(good_matches)) + ", time: " + str(elapsed_time), end="\r")
 
     if verbose:
         print()
@@ -93,4 +112,34 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, ra
         matches_all_avg = total_all_images / len(matches_sum)
         print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
 
-    return matches
+    draw_time_plt(matching_time)
+    return matches, matching_time
+
+
+def draw_time_plt(img_times):
+    img_names = list(img_times.keys())
+    times = list(img_times.values())
+    x_name = range(len(img_names))
+    avg_time = sum(times) / len(times)
+    # plt.bar(x_name, times, width=0.5)
+    # plt.title('Feature Matching Time Per Query Image')
+    # plt.xlabel('Image')
+    #
+    # plt.axhline(avg_time, color='red', linewidth=1)
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.bar(x_name, times, width=3, log=False)
+    ax.set_xlim(xmin=0, xmax=len(img_times))
+    ax.set_title('Feature Matching Time (seconds) Per Query Image')
+    ax.set_xlabel('Image')
+    # plt.ylabel('Feature Matching Time (seconds)')
+
+    ax.axhline(avg_time, color='red', linewidth=1, label="Average: " + "{0:.3f} ".format(avg_time) + "seconds")
+    ax.legend(loc='upper left')
+    trans = transforms.blended_transform_factory(
+        ax.get_yticklabels()[0].get_transform(), ax.transData)
+    ax.text(0, avg_time, "{0:.3f}".format(avg_time), color="red", transform=trans,
+            ha="right", va="center")
+
+    plt.savefig('Feature_Matching_Time.png', dpi=300, bbox_inches='tight')
+    plt.show()

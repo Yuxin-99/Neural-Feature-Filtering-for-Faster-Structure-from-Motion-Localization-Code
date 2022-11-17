@@ -167,3 +167,12 @@ def read_cameras_binary(path_to_model_file):
                                         params=np.array(params))
         assert len(cameras) == num_cameras
     return cameras
+
+
+def get_camera_matrix(db, query_img):
+    camera_id = db.execute("SELECT camera_id FROM images WHERE name = " + "'" + query_img + "'")
+    camera_id = str(camera_id.fetchone()[0])
+    camera_params = db.execute("SELECT params FROM cameras WHERE camera_id = " + "'" + camera_id + "'")
+    camera_params = camera_params.fetchone()[0]
+    camera_data = db.blob_to_array(camera_params, np.float32)
+    return camera_data

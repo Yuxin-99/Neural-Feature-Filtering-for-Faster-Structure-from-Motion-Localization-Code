@@ -6,7 +6,7 @@ import cv2
 #                  Average matches per image: 176.62165867032215, no of images 1459
 
 
-def do_pose_estimation(matches, query_images_names, query_img_path):
+def do_pose_estimation(matches, query_images_names, query_img_path, est_save_path):
     c0_intrinsics = np.array([[868.993378, 0, 525.942323],
                               [0, 866.063001, 420.042529],
                               [0, 0, 1]])
@@ -19,7 +19,6 @@ def do_pose_estimation(matches, query_images_names, query_img_path):
     good_img_num = 0
     inliers_sum = []
     poses = {}
-    est_save_path = "../slice7/est_pnts_on_img/"      # "pose_estimation"
     for i in range(len(query_images_names)):
         query_img_nm = query_images_names[i]
         query_matches = matches.get(query_img_nm)
@@ -31,6 +30,7 @@ def do_pose_estimation(matches, query_images_names, query_img_path):
         img_pnts = query_matches[:, 0:2]
         obj_pnts = query_matches[:, 2:5]
         # read the camera intrinsics from query.db
+        # matrix = get_camera_matrix(query_db, )
         if "c0" in query_img_nm:
             camera_matrix = c0_intrinsics
             dist_coeff = c0_dist_coeff
@@ -100,15 +100,6 @@ def draw_pnts_on_img(query_img, img_pnts, projected_pnts):
         res_img = cv2.circle(res_img, (int(projected_pnt[0]), int(projected_pnt[1])), 4, projected_color, -1)
 
     return res_img
-
-
-def get_camera_matrix(db, query_img):
-    camera_id = db.execute("SELECT camera_id FROM images WHERE name = " + "'" + query_img + "'")
-    camera_id = str(camera_id.fetchone()[0])
-    camera_params = db.execute("SELECT params FROM cameras WHERE camera_id = " + "'" + camera_id + "'")
-    camera_params = camera_params.fetchone()[0]
-    query_image_descriptors_data = db.blob_to_array(camera_params, np.float32)
-    return query_image_descriptors_data
 
 
 def project_obj_pnts(obj_pnts, rvec, tvec, K):

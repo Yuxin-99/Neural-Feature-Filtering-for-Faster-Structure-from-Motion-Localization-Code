@@ -1,9 +1,9 @@
 import cv2
 from database import COLMAPDatabase
 import matplotlib.pyplot as plt
+import matplotlib.transforms as transforms
 import numpy as np
 import os
-import sys
 
 from read_model import read_images_binary
 
@@ -46,22 +46,24 @@ def evaluate_est_pose(poses_est, gt_from_model, params):
         t_gt = poses_gt[img_nm][4:]
         # if the ground truth is read from the provided img text file provided by the dataset,
         # then need to convert it from a camera center to a translation vector
-        if not gt_from_model:
-            camera_center = np.array([t_gt]).transpose()
-            t_gt = - rq_gt_matrix.dot(camera_center)
+        # if not gt_from_model:
+        #     camera_center = np.array([t_gt]).transpose()
+        #     t_gt = - rq_gt_matrix.dot(camera_center)
+
+        camera_center_est = -(r_est_matrix.transpose()).dot(t_est)
+        if gt_from_model:
+            t_gt = -(rq_gt_matrix.transpose()).dot(t_gt)
 
         r_err = compute_rot_quat_err(rq_gt, rq_est)
         # r_err = compute_rot_mx_err(rq_gt_matrix, r_est_matrix)
-        t_err = compute_trans_error(t_gt, t_est, 1)
+        # t_err = compute_trans_error(t_gt, t_est, 1)
+        t_err = compute_trans_error(t_gt, camera_center_est[:, 0], 1)
         r_errors[img_nm] = r_err
         t_errors[img_nm] = t_err
 
     print()
     print("finish computing errors")
 
-    # save the errors
-    np.save(params.pose_rot_err_save_path, r_errors)
-    np.save(params.pose_translation_err_save_path, t_errors)
     r_errs = np.array([list(r_errors.values())]).transpose()
     r_err_avg = np.sum(r_errs) / len(r_errors)
     print("Average rotation error: " + str(r_err_avg) + ", no of images " + str(len(r_errors)))
@@ -70,10 +72,17 @@ def evaluate_est_pose(poses_est, gt_from_model, params):
     t_err_avg = np.sum(t_errs) / len(t_errs)
     print("Average translation error: " + str(t_err_avg) + ", no of images " + str(len(r_errors)))
 
+    maa = ComputeMaa(r_errs, t_errs)
+    print(f'Mean average Accuracy: ": {maa[0]:.05f}')
+
     # draw a bar plot for the rotation error
-    draw_error_plt(r_errors.keys(), list(r_errors.values()), "Rotation", r_err_avg)
+    draw_error_plt(r_errors.keys(), list(r_errors.values()), "Rotation", "degrees", r_err_avg)
     # draw a bar plot for the translation error
-    draw_error_plt(t_errors.keys(), list(t_errors.values()), "Translation", t_err_avg)
+    draw_error_plt(t_errors.keys(), list(t_errors.values()), "Translation", "meters", t_err_avg)
+
+    # save the errors
+    np.save(params.pose_rot_err_save_path, r_errors)
+    np.save(params.pose_translation_err_save_path, t_errors)
 
 
 def get_image_pose(db, query_image):
@@ -119,6 +128,21 @@ def compute_rot_mx_err(rot_gt, rot):
     err_r = np.arccos((np.trace(m) - 1) / 2)
 
     return err_r * 180 / np.pi
+
+
+def ComputeMaa(err_q, err_t):
+    """Compute the mean Average Accuracy at different tresholds, for one scene."""
+    thresholds_q = np.linspace(1, 10, 10)
+    thresholds_t = np.geomspace(0.2, 5, 10)
+
+    assert len(err_q) == len(err_t)
+
+    acc, acc_q, acc_t = [], [], []
+    for th_q, th_t in zip(thresholds_q, thresholds_t):
+        acc += [(np.bitwise_and(np.array(err_q) < th_q, np.array(err_t) < th_t)).sum() / len(err_q)]
+        acc_q += [(np.array(err_q) < th_q).sum() / len(err_q)]
+        acc_t += [(np.array(err_t) < th_t).sum() / len(err_t)]
+    return np.mean(acc), np.array(acc), np.array(acc_q), np.array(acc_t)
 
 
 def matrix_to_quaternion(matrix):
@@ -191,11 +215,20 @@ def quaternion_to_matrix(Q):
     return rot_matrix
 
 
-def draw_error_plt(img_names, errors, err_name, err_avg):
-    plt.bar(img_names, errors, width=0.5, log=True)
-    plt.title(err_name + ' Error Per Query Image')
-    plt.xlabel('Image')
-    plt.ylabel(err_name + ' Error')
-    plt.axhline(err_avg, color='green', linewidth=2)
-    plt.show()
+def draw_error_plt(img_names, errors, err_name, unit, err_avg):
+    x_name = range(len(img_names))
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.bar(x_name, errors, width=3, log=True)
+    ax.set_xlim(xmin=-0, xmax=len(img_names))
+    ax.set_title(err_name + "Error (" + unit + ') Per Query Image')
+    ax.set_xlabel('Image')
+    # ax.set_ylabel(err_name + ' Error')
 
+    ax.axhline(err_avg, color='red', linewidth=1, label="Average: " + "{0:.3f} ".format(err_avg) + unit)
+    ax.legend(loc='upper left')
+    trans = transforms.blended_transform_factory(
+        ax.get_yticklabels()[0].get_transform(), ax.transData)
+    ax.text(0, err_avg, "{0:.3f}".format(err_avg), color="red", transform=trans,
+            ha="right", va="center")
+
+    plt.show()
