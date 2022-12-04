@@ -38,7 +38,7 @@ def do_pose_estimation(matches, query_images_names, query_img_path, est_save_pat
             camera_matrix = c1_intrinsics
             dist_coeff = c1_dist_coeff
         ret_val, rvec, tvec, inliers = cv2.solvePnPRansac(objectPoints=obj_pnts, imagePoints=img_pnts, cameraMatrix=camera_matrix,
-                                                          distCoeffs=dist_coeff, iterationsCount=1000, flags=cv2.SOLVEPNP_EPNP)   # SOLVEPNP_ITERATIVE
+                                                          distCoeffs=None, iterationsCount=1000, flags=cv2.SOLVEPNP_EPNP)   # SOLVEPNP_ITERATIVE
         if not ret_val:
             print("solvePnPRansac failed on the query image: " + query_img_nm, end="\r")
             continue
@@ -58,7 +58,7 @@ def do_pose_estimation(matches, query_images_names, query_img_path, est_save_pat
         if tvec is None:
             tvec = np.zeros([3, 1])
         # shape(num_inlier, 1, 2)
-        projected_pnts, _ = cv2.projectPoints(np.array(inlier_obj_pnts, dtype=np.float64), rvec, tvec, camera_matrix, distCoeffs=dist_coeff)
+        projected_pnts, _ = cv2.projectPoints(np.array(inlier_obj_pnts, dtype=np.float64), rvec, tvec, camera_matrix, distCoeffs=None)
         # points_est = project_obj_pnts(inlier_obj_pnts, rvec, tvec, camera_matrix)
         rt = np.r_[rvec, tvec]
         poses[query_img_nm] = rt

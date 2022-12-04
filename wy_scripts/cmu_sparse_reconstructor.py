@@ -1,5 +1,6 @@
 import colmap
 from register_img_helper import write_query_img_txt, gen_base_cam_centers_txt
+from read_model import read_images_binary, read_cameras_binary
 import subprocess
 import glob
 # from get_scale import calc_scale_COLMAP, calc_scale_COLMAP_ARCORE
@@ -18,7 +19,8 @@ slice = path.split('/')[-2].split("_")[0]   # for slice4_4, slice4_5 etc etc
 base_db_path = path+"base/database.db"
 base_images_dir = path+"base/images"
 base_model_dir = path+"base/model"
-reference_model_images_path = path + "/ground-truth-database-images-"+slice+".txt"
+# reference_model_images_path = path + "ground-truth-database-images-"+slice+".txt"
+reference_model_images_path = path + "ground-truth-database-images-slice7.txt"
 alignment_reference_cam_centers_txt = path+"base/base_images_cam_centers.txt"
 live_base_image_list_file = path+"base/query_name.txt"
 vocab_bin_path = path + "vocab_tree_flickr100K_words32K.bin"
@@ -37,8 +39,10 @@ colmap.mapper(base_db_path, base_images_dir, base_model_dir)
 #     np.savetxt(path+"scale.txt", [scale])
 # else:
 gen_base_cam_centers_txt(base_images_dir, reference_model_images_path)
-# Note: this will overwrite the first model
-colmap.model_aligner(base_model_dir+"/0", base_model_dir+"/0", alignment_reference_cam_centers_txt)
+# # Note: this will overwrite the first model
+# read_images_binary(base_model_dir+"/0/images.bin")
+# read_cameras_binary(path+"sparse/cameras.bin")
+colmap.model_aligner(base_model_dir+"/0", base_model_dir+"/1", alignment_reference_cam_centers_txt)
 
 # query_images_dir = path+"live/images/"
 # gen_query_txt(query_images_dir, base_images_no)

@@ -1,6 +1,5 @@
 import numpy as np
 import os
-import re
 import sys
 
 from database import COLMAPDatabase
@@ -9,11 +8,7 @@ from get_points_3D_mean_desc import compute_avg_desc
 from parameters import Parameters
 from pose_estimator import do_pose_estimation
 from pose_evaluator import evaluate_est_pose
-from read_model import read_points3D_binary, get_points3D_xyz, get_camera_matrix
-
-
-# python3 main.py ../CMU-models/sparse/points3D.bin ../CMU-models/query_models/undistorted_query.db ../CMU-models/undistorted_query_imgs 1
-#  (Total matches: 664518, no of images 1824. Average matches per image: 364.31907894736844)
+from read_model import read_points3D_binary, get_points3D_xyz
 
 # python3 main.py ../Dataset/slice7 0
 
@@ -25,11 +20,9 @@ def main():
         3. Compare the estimated poses and ground truth data to analyze the error metrics(rotation and translation)"""
 
     # construct the parameters
-    base_path = sys.argv[1]  # e.g.: ../Dataset/slice7
+    base_path = sys.argv[1]  # e.g.: ../../Dataset/slice7
     # assume the dataset number is included in the directory name
-    dataset_id = int(re.search(r'\d+', base_path).group())
-    dataset_id = str(dataset_id)
-    params = Parameters(base_path, dataset_id)
+    params = Parameters(base_path)
 
     # Read the related files
     points3D_file_path = params.train_points3D_path  # points3D.bin from the training model (provided by dataset)
@@ -59,14 +52,13 @@ def main():
         # do the matching of training descriptors and the query images
         print("start to do matching!")
         matches, matching_time = feature_matcher_wrapper(db_query, query_images_names, train_descriptors_base,
-                                                         points3D_xyz, params.ratio_test_val,
-                                                         verbose=True)  # lower thresh
+                                                         points3D_xyz, params, verbose=True)  # lower thresh
         print("matching is done!")
         np.save(params.matches_save_path, matches)
         np.save(params.match_times_save_path, matching_time)
 
-    for i in range(len(query_images_names)):
-        matrix = get_camera_matrix(db_query, query_images_names[i])
+    # for i in range(len(query_images_names)):
+    #     matrix = get_camera_matrix(db_query, query_images_names[i])
 
     # load the saved poses data file or do pose estimation
     if os.path.exists(params.poses_save_path):

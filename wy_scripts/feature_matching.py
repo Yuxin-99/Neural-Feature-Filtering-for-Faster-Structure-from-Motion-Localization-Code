@@ -48,7 +48,9 @@ def get_camera_matrix(db, query_img):
     return camera_data
 
 
-def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, verbose=False, points_scores_array=None):
+def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, params, verbose=False, points_scores_array=None):
+    ratio_test_val = params.ratio_test_val
+    session_id = params.dataset_id
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
@@ -58,12 +60,13 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, ra
     for i in range(len(query_images)):
         start_time = time.perf_counter()
         query_image = query_images[i]
-        image_id = get_image_id(db, query_image)
+        query_image_name = "session_" + session_id + "/" + query_image
+        image_id = get_image_id(db, query_image_name)
         # keypoints data
         keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
 
-        matrix = get_camera_matrix(db, query_image)
+        # matrix = get_camera_matrix(db, query_image)
 
         matcher = cv2.BFMatcher()       # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
@@ -112,20 +115,15 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, ra
         matches_all_avg = total_all_images / len(matches_sum)
         print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
 
-    draw_time_plt(matching_time)
+    draw_time_plt(matching_time, params.results_path)
     return matches, matching_time
 
 
-def draw_time_plt(img_times):
+def draw_time_plt(img_times, save_path):
     img_names = list(img_times.keys())
     times = list(img_times.values())
     x_name = range(len(img_names))
     avg_time = sum(times) / len(times)
-    # plt.bar(x_name, times, width=0.5)
-    # plt.title('Feature Matching Time Per Query Image')
-    # plt.xlabel('Image')
-    #
-    # plt.axhline(avg_time, color='red', linewidth=1)
 
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.bar(x_name, times, width=3, log=False)
@@ -141,5 +139,5 @@ def draw_time_plt(img_times):
     ax.text(0, avg_time, "{0:.3f}".format(avg_time), color="red", transform=trans,
             ha="right", va="center")
 
-    plt.savefig('Feature_Matching_Time.png', dpi=300, bbox_inches='tight')
+    plt.savefig(save_path + 'Feature_Matching_Time.png', dpi=300, bbox_inches='tight')
     plt.show()

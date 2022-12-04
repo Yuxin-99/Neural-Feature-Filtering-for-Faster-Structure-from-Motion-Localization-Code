@@ -1,4 +1,5 @@
 import cv2
+import pycolmap
 from database import COLMAPDatabase
 import matplotlib.pyplot as plt
 import matplotlib.transforms as transforms
@@ -34,16 +35,22 @@ def evaluate_est_pose(poses_est, gt_from_model, params):
     # loop over the estimated poses to compute the error
     r_errors = {}
     t_errors = {}
+    session_id = params.dataset_id
     for img_nm in poses_est.keys():
         print("evaluate the query image: " + img_nm, end="\r")
+        gt_img_nm = "session_" + session_id + "/" + img_nm
         rvec_est = poses_est[img_nm][0:3]
         r_est_matrix = cv2.Rodrigues(rvec_est)[0]
         rq_est = matrix_to_quaternion(r_est_matrix)
         t_est = poses_est[img_nm][3:]
 
-        rq_gt = poses_gt[img_nm][0:4]
+        pose_gt = poses_gt.get(gt_img_nm)
+        if pose_gt is None:
+            print("Couldn't find ground truth of " + gt_img_nm + " in gt/model/images.bin")
+            continue
+        rq_gt = poses_gt[gt_img_nm][0:4]
         rq_gt_matrix = quaternion_to_matrix(rq_gt)
-        t_gt = poses_gt[img_nm][4:]
+        t_gt = poses_gt[gt_img_nm][4:]
         # if the ground truth is read from the provided img text file provided by the dataset,
         # then need to convert it from a camera center to a translation vector
         # if not gt_from_model:
@@ -76,9 +83,9 @@ def evaluate_est_pose(poses_est, gt_from_model, params):
     print(f'Mean average Accuracy: ": {maa[0]:.05f}')
 
     # draw a bar plot for the rotation error
-    draw_error_plt(r_errors.keys(), list(r_errors.values()), "Rotation", "degrees", r_err_avg)
+    draw_error_plt(r_errors.keys(), list(r_errors.values()), "Rotation", "degrees", r_err_avg, params.results_path)
     # draw a bar plot for the translation error
-    draw_error_plt(t_errors.keys(), list(t_errors.values()), "Translation", "meters", t_err_avg)
+    draw_error_plt(t_errors.keys(), list(t_errors.values()), "Translation", "meters", t_err_avg, params.results_path)
 
     # save the errors
     np.save(params.pose_rot_err_save_path, r_errors)
@@ -215,7 +222,7 @@ def quaternion_to_matrix(Q):
     return rot_matrix
 
 
-def draw_error_plt(img_names, errors, err_name, unit, err_avg):
+def draw_error_plt(img_names, errors, err_name, unit, err_avg, save_path):
     x_name = range(len(img_names))
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.bar(x_name, errors, width=3, log=True)
@@ -231,4 +238,5 @@ def draw_error_plt(img_names, errors, err_name, unit, err_avg):
     ax.text(0, err_avg, "{0:.3f}".format(err_avg), color="red", transform=trans,
             ha="right", va="center")
 
+    plt.savefig(save_path + err_name + 'Error.png', dpi=300, bbox_inches='tight')
     plt.show()
