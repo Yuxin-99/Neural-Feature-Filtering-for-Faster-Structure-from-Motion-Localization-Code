@@ -67,8 +67,11 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, pa
         queryDescriptors = get_queryDescriptors(db, image_id)
 
         # matrix = get_camera_matrix(db, query_image)
-
-        matcher = cv2.BFMatcher()       # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) or cv.BFMatcher()
+        FLANN_INDEX_KDTREE = 0
+        index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
+        search_params = dict(checks=0)
+        matcher = cv2.FlannBasedMatcher(index_params, search_params)
+        # matcher = cv2.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
         temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
 
