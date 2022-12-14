@@ -11,26 +11,29 @@ from read_model import read_images_binary
 eps = 1e-15
 
 
-def evaluate_est_pose(poses_est, gt_from_model, params):
+def evaluate_est_pose(poses_est, params):
     print("start to compute errors")
     # read the ground truth poses
     poses_gt = {}
-    if gt_from_model:
-        # read the corresponding camera data from images.bin
-        images = read_images_binary(params.query_gt_img_bin_path)
-        for img in images.values():
-            rt = np.r_[img.qvec, img.tvec]
-            poses_gt[img.name] = rt
-    else:
-        # read from the provided ground truth text files
-        poses_gt_path = params.query_camera_poses_folder
-        poses_gt_files = os.listdir(poses_gt_path)
-        for pose_gt_file in poses_gt_files:
-            path = poses_gt_path + "/" + pose_gt_file
-            with open(path) as f:
-                for line in f:
-                    pose_gt = line.split(" ")
-                    poses_gt[pose_gt[0]] = np.array(pose_gt[1:8], dtype=np.float64)
+
+    # read the corresponding camera data from images.bin
+    images = read_images_binary(params.query_gt_img_bin_path)
+    for img in images.values():
+        rt = np.r_[img.qvec, img.tvec]
+        poses_gt[img.name] = rt
+
+    # if gt_from_model:
+    #
+    # else:
+    #     # read from the provided ground truth text files
+    #     poses_gt_path = params.query_camera_poses_folder
+    #     poses_gt_files = os.listdir(poses_gt_path)
+    #     for pose_gt_file in poses_gt_files:
+    #         path = poses_gt_path + "/" + pose_gt_file
+    #         with open(path) as f:
+    #             for line in f:
+    #                 pose_gt = line.split(" ")
+    #                 poses_gt[pose_gt[0]] = np.array(pose_gt[1:8], dtype=np.float64)
 
     # loop over the estimated poses to compute the error
     r_errors = {}
@@ -58,8 +61,9 @@ def evaluate_est_pose(poses_est, gt_from_model, params):
         #     t_gt = - rq_gt_matrix.dot(camera_center)
 
         camera_center_est = -(r_est_matrix.transpose()).dot(t_est)
-        if gt_from_model:
-            t_gt = -(rq_gt_matrix.transpose()).dot(t_gt)
+        t_gt = -(rq_gt_matrix.transpose()).dot(t_gt)
+        # if gt_from_model:
+        #     t_gt = -(rq_gt_matrix.transpose()).dot(t_gt)
 
         r_err = compute_rot_quat_err(rq_gt, rq_est)
         # r_err = compute_rot_mx_err(rq_gt_matrix, r_est_matrix)

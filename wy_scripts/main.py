@@ -2,6 +2,7 @@ import numpy as np
 import os
 import sys
 
+from classify_matchability_ML import get_trained_classify_model
 from database import COLMAPDatabase
 from feature_matching import feature_matcher_wrapper
 from get_points_3D_mean_desc import compute_avg_desc
@@ -32,7 +33,8 @@ def main():
     query_images_names = sorted(os.listdir(query_images_path))
 
     # load the saved matches data file to decide or do the feature matching first
-    matching_timer_on = sys.argv[3] == "1"  # if we need to record the time of feature matching
+    matching_timer_on = sys.argv[3] == "timer"  # if we need to record the time of feature matching
+    filter_desc = sys.argv[4] == "filter"   # if we want to filter non-matchable descs before matching
     if (os.path.exists(params.matches_save_path)) and (not matching_timer_on):
         matches = np.load(params.matches_save_path, allow_pickle=True).item()
         print("Load matches from file " + params.matches_save_path + "!")
@@ -51,8 +53,13 @@ def main():
 
         # do the matching of training descriptors and the query images
         print("start to do matching!")
+        clf = None
+        if filter_desc:
+            # assume the ml database is already created
+            # ------ train the classifier model ------
+            clf = get_trained_classify_model(params)
         matches, matching_time = feature_matcher_wrapper(db_query, query_images_names, train_descriptors_base,
-                                                         points3D_xyz, params, verbose=True)  # lower thresh
+                                                         points3D_xyz, params, clf, verbose=True)  # lower thresh
         print("matching is done!")
         np.save(params.matches_save_path, matches)
         np.save(params.match_times_save_path, matching_time)
@@ -72,7 +79,7 @@ def main():
 
     # compute the error metrics for the estimated poses
     gt_from_model = sys.argv[2] == "1"
-    evaluate_est_pose(rt_poses, gt_from_model, params)
+    evaluate_est_pose(rt_poses, params)
 
 
 if __name__ == "__main__":

@@ -169,6 +169,12 @@ def read_cameras_binary(path_to_model_file):
     return cameras
 
 
+def get_image_id(db, query_image):
+    image_id = db.execute("SELECT image_id FROM images WHERE name = " + "'" + query_image + "'")
+    image_id = str(image_id.fetchone()[0])
+    return image_id
+
+
 def get_camera_matrix(db, query_img):
     camera_id = db.execute("SELECT camera_id FROM images WHERE name = " + "'" + query_img + "'")
     camera_id = str(camera_id.fetchone()[0])
@@ -176,3 +182,29 @@ def get_camera_matrix(db, query_img):
     camera_params = camera_params.fetchone()[0]
     camera_data = db.blob_to_array(camera_params, np.float32)
     return camera_data
+
+
+def load_images_from_text_file(path):
+    images = []
+    with open(path) as f:
+        images = f.readlines()
+    images = [x.strip() for x in images]
+    return images
+
+
+def get_localised_image_by_names(names, images_bin_path):
+    images = read_images_binary(images_bin_path)
+    localised_images = []
+    for name in names:
+        if image_localised(name, images) is not None:
+            localised_images.append(name)
+    return localised_images
+
+
+def image_localised(name, images):
+    image_id = None
+    for k, v in images.items():
+        if v.name == name:
+            image_id = v.id
+            return image_id
+    return image_id

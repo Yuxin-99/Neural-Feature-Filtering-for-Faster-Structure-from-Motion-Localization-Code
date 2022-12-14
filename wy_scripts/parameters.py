@@ -4,9 +4,9 @@ import re
 
 class Parameters(object):
 
-    def __init__(self, dataset_path):
-        dataset_id = int(re.search(r'\d+', dataset_path).group())
-        self.dataset_id = str(dataset_id)
+    def __init__(self, dataset_path, session_id):
+        # session_id = int(re.search(r'\d+', dataset_path).group())
+        self.session_id = session_id
 
         base_path = os.path.join(dataset_path, "exmaps_data")
         self.train_database_path = os.path.join(base_path, "base/database.db")
@@ -14,18 +14,19 @@ class Parameters(object):
         self.train_model_cameras_path = os.path.join(base_path, "base/model/cameras.bin")
 
         self.query_db_path = os.path.join(base_path, "gt/database.db")
-        self.query_img_folder = os.path.join(base_path, "gt/images/session_" + self.dataset_id)
+        self.query_img_folder = os.path.join(base_path, "gt/images/session_" + self.session_id)
 
-        saved_data_path = os.path.join(base_path, "flann_saved_data")
+        saved_data_path = os.path.join(base_path, "clf_saved_data")
         if not os.path.exists(saved_data_path):
             os.makedirs(saved_data_path)
-        self.results_path = os.path.join(base_path, "flann_results/")
+        self.results_path = os.path.join(base_path, "clf_results/")
         if not os.path.exists(self.results_path):
             os.makedirs(self.results_path)
 
         self.avg_descs_base_path = os.path.join(saved_data_path, "avg_descs_base.npy")
         self.matches_save_path = os.path.join(saved_data_path, "matches.npy")
         self.match_times_save_path = os.path.join(self.results_path, "matching_times.npy")
+        self.ratio_test_val = 0.85
 
         self.poses_save_path = os.path.join(saved_data_path, "poses.npy")
         est_img_path = os.path.join(self.results_path, "est_pnts_on_img")
@@ -37,12 +38,17 @@ class Parameters(object):
 
         # not the session ones!
         self.query_gt_img_bin_path = os.path.join(base_path, "gt/model/images.bin")
-        # self.query_camera_poses_folder = os.path.join(base_path, "camera-poses")
-        # self.query_images_path = os.path.join(base_path, "gt/query_name.txt")
+        self.query_points_bin_path = os.path.join(base_path, "gt/model/points3D.bin")
+        self.query_images_path = os.path.join(base_path, "gt/query_name.txt")
 
+        # -------------------- ML classification --------------------
         self.live_db_path = os.path.join(base_path, "live/database.db")
         self.live_model_images_path = os.path.join(base_path, "live/model/images.bin")
         self.live_model_points3D_path = os.path.join(base_path, "live/model/points3D.bin")
 
-        self.ratio_test_val = 0.85
+        # make sure you delete the databases (.db) file first! and "ML_data" folder has to be created manually
+        ml_db_dir = os.path.join(dataset_path, "ML_data/")
+        os.makedirs(ml_db_dir, exist_ok=True)
+        self.ml_db_path = os.path.join(ml_db_dir, "ml_database_all.db")
+        self.clf_ml_path = os.path.join(ml_db_dir, "random_forest.joblib")
 

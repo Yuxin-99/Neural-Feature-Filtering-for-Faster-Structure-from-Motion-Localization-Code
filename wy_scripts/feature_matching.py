@@ -6,6 +6,8 @@ import time
 
 from itertools import chain
 
+from read_model import get_image_id
+
 
 def get_keypoints_xy(db, image_id):
     query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
@@ -33,12 +35,6 @@ def get_queryDescriptors(db, image_id):
     return queryDescriptors
 
 
-def get_image_id(db, query_image):
-    image_id = db.execute("SELECT image_id FROM images WHERE name = " + "'" + query_image + "'")
-    image_id = str(image_id.fetchone()[0])
-    return image_id
-
-
 def get_camera_matrix(db, query_img):
     camera_id = db.execute("SELECT camera_id FROM images WHERE name = " + "'" + query_img + "'")
     camera_id = str(camera_id.fetchone()[0])
@@ -48,30 +44,42 @@ def get_camera_matrix(db, query_img):
     return camera_data
 
 
-def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, params, verbose=False, points_scores_array=None):
+def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, params, clf_model, verbose=False, points_scores_array=None):
     ratio_test_val = params.ratio_test_val
     session_id = params.dataset_id
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
     matching_time = {}
+    matchable_threshold = 0.5
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
-        start_time = time.perf_counter()
         query_image = query_images[i]
         query_image_name = "session_" + session_id + "/" + query_image
         image_id = get_image_id(db, query_image_name)
         # keypoints data
         keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
+        running_time = 0
 
-        # matrix = get_camera_matrix(db, query_image)
+        if clf_model is not None:
+            start_time = time.perf_counter()
+            pred_matchable = clf_model.predict(queryDescriptors)
+            elapsed_time = time.perf_counter() - start_time
+            running_time += elapsed_time
+
+            matchable_desc_indices = np.where(pred_matchable > matchable_threshold)[0]
+            keypoints_xy = keypoints_xy[matchable_desc_indices]
+            queryDescriptors = queryDescriptors[matchable_desc_indices]
+
+            # matrix = get_camera_matrix(db, query_image)
         FLANN_INDEX_KDTREE = 0
         index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
         search_params = dict(checks=0)
-        matcher = cv2.FlannBasedMatcher(index_params, search_params)
-        # matcher = cv2.BFMatcher()
+        # matcher = cv2.FlannBasedMatcher(index_params, search_params)
+        start_time = time.perf_counter()
+        matcher = cv2.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
         temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
 
@@ -104,7 +112,8 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, pa
 
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
-        matching_time[query_image] = elapsed_time
+        running_time += elapsed_time
+        matching_time[query_image] = running_time
         matches[query_image] = np.array(good_matches)
         matches_sum.append(len(good_matches))
         if verbose:

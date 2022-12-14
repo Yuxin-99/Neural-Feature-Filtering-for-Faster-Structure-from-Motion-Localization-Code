@@ -3,6 +3,7 @@
 
 import numpy as np
 import sqlite3
+from sqlite3 import Error
 import sys
 
 IS_PYTHON3 = sys.version_info[0] >= 3
@@ -70,4 +71,26 @@ class COLMAPDatabase(sqlite3.Connection):
         self.execute(
             "INSERT INTO matches VALUES (?, ?, ?, ?)",
             (pair_id, ) + matches.shape + (self.array_to_blob(matches),))
+
+    @staticmethod
+    def create_db_for_all_data(db_file):
+        sql_drop_table_if_exists = "DROP TABLE IF EXISTS data;"
+        sql_create_data_table = """CREATE TABLE IF NOT EXISTS data (
+                                                    image_id INTEGER NOT NULL,
+                                                    name TEXT NOT NULL,
+                                                    sift BLOB NOT NULL,
+                                                    xyz BLOB NOT NULL,
+                                                    xy BLOB NOT NULL,
+                                                    matched INTEGER NOT NULL
+                                                );"""
+        conn = None
+        try:
+            conn = sqlite3.connect(db_file)
+            conn.execute(sql_drop_table_if_exists)
+            conn.commit()
+            conn.execute(sql_create_data_table)
+            conn.commit()
+            return conn
+        except Error as e:
+            print(e)
 
