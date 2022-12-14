@@ -22,8 +22,8 @@ def main():
 
     # construct the parameters
     base_path = sys.argv[1]  # e.g.: ../../Dataset/slice7
-    # assume the dataset number is included in the directory name
-    params = Parameters(base_path)
+    session_id = sys.argv[2]
+    params = Parameters(base_path, session_id)
 
     # Read the related files
     points3D_file_path = params.train_points3D_path  # points3D.bin from the training model (provided by dataset)
@@ -78,7 +78,6 @@ def main():
         print("Pose estimating is done!")
 
     # compute the error metrics for the estimated poses
-    gt_from_model = sys.argv[2] == "1"
     evaluate_est_pose(rt_poses, params)
 
 

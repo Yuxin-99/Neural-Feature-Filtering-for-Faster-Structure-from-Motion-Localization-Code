@@ -46,7 +46,7 @@ def get_camera_matrix(db, query_img):
 
 def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, params, clf_model, verbose=False, points_scores_array=None):
     ratio_test_val = params.ratio_test_val
-    session_id = params.dataset_id
+    session_id = params.session_id
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
@@ -64,9 +64,9 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, pa
         running_time = 0
 
         if clf_model is not None:
-            start_time = time.perf_counter()
+            start_time = time.time()
             pred_matchable = clf_model.predict(queryDescriptors)
-            elapsed_time = time.perf_counter() - start_time
+            elapsed_time = time.time() - start_time
             running_time += elapsed_time
 
             matchable_desc_indices = np.where(pred_matchable > matchable_threshold)[0]
@@ -76,12 +76,14 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, pa
             # matrix = get_camera_matrix(db, query_image)
         FLANN_INDEX_KDTREE = 0
         index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
-        search_params = dict(checks=0)
+        search_params = dict(checks=50)
+        start_time = time.time()
         # matcher = cv2.FlannBasedMatcher(index_params, search_params)
-        start_time = time.perf_counter()
         matcher = cv2.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
         temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
+        knn_end_time = time.time()
+        knn_elapsed_time = knn_end_time - start_time
 
         # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
         # m the closest, n is the second closest
@@ -110,7 +112,7 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, pa
                 match_data = list(chain(*match_data))
                 good_matches.append(match_data)
 
-        end_time = time.perf_counter()
+        end_time = time.time()
         elapsed_time = end_time - start_time
         running_time += elapsed_time
         matching_time[query_image] = running_time
