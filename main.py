@@ -55,7 +55,7 @@ train_descriptors_base = np.load(parameters.avg_descs_base_path).astype(np.float
 train_descriptors_live = np.load(parameters.avg_descs_live_path).astype(np.float32)
 
 # Getting the scores
-points3D_reliability_scores_matrix= np.load(parameters.per_image_decay_matrix_path)
+points3D_reliability_scores_matrix = np.load(parameters.per_image_decay_matrix_path)
 points3D_heatmap_vals_matrix = np.load(parameters.per_session_decay_matrix_path)
 points3D_visibility_matrix = np.load(parameters.binary_visibility_matrix_path)
 

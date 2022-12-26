@@ -2,7 +2,7 @@ import numpy as np
 import os
 import sys
 
-from classify_matchability_ML import get_trained_classify_model
+from classify_matchability_ML import get_trained_classify_model, test_classify_model
 from database import COLMAPDatabase
 from feature_matching import feature_matcher_wrapper
 from get_points_3D_mean_desc import compute_avg_desc
@@ -22,11 +22,12 @@ def main():
 
     # construct the parameters
     base_path = sys.argv[1]  # e.g.: ../../Dataset/slice7
-    session_id = sys.argv[2]
-    params = Parameters(base_path, session_id)
+    session_id = sys.argv[2]     # session number in gt folder, e.g., 7
+    method = sys.argv[3]    # e.g.: base, clf...
+    params = Parameters(base_path, session_id, method)
 
     # Read the related files
-    points3D_file_path = params.train_points3D_path  # points3D.bin from the training model (provided by dataset)
+    points3D_file_path = params.live_model_points3D_path  # points3D.bin from the training model (provided by dataset)
     query_database_path = params.query_db_path
     db_query = COLMAPDatabase.connect(query_database_path)  # database of the query images
     query_images_path = params.query_img_folder  # path to the folder that contains the query images
@@ -34,9 +35,10 @@ def main():
 
     # load the saved matches data file to decide or do the feature matching first
     matching_timer_on = sys.argv[3] == "timer"  # if we need to record the time of feature matching
-    filter_desc = sys.argv[4] == "filter"   # if we want to filter non-matchable descs before matching
+    filter_desc = method == "clf"   # if we want to filter non-matchable descs before matching
     if (os.path.exists(params.matches_save_path)) and (not matching_timer_on):
         matches = np.load(params.matches_save_path, allow_pickle=True).item()
+        matching_time = np.load(params.match_times_save_path, allow_pickle=True).item()
         print("Load matches from file " + params.matches_save_path + "!")
     else:
         """do feature matching to find and save the matches first"""
@@ -48,7 +50,7 @@ def main():
         if os.path.exists(params.avg_descs_base_path):
             train_descriptors_base = np.load(params.avg_descs_base_path).astype(np.float32)
         else:
-            train_descriptors_base = compute_avg_desc(params.train_database_path, params.train_points3D_path)
+            train_descriptors_base = compute_avg_desc(params.live_db_path, points3D_file_path)
             np.save(params.avg_descs_base_path, train_descriptors_base)
 
         # do the matching of training descriptors and the query images
@@ -70,15 +72,37 @@ def main():
     # load the saved poses data file or do pose estimation
     if os.path.exists(params.poses_save_path):
         rt_poses = np.load(params.poses_save_path, allow_pickle=True).item()
+        degenerate_pose_perc = (len(query_images_names) - len(rt_poses)) / len(query_images_names)
         print("Load poses from file " + params.poses_save_path + "!")
     else:
         print("start to do pose estimating")
-        rt_poses = do_pose_estimation(matches, query_images_names, query_images_path, params.est_img_save_path)
+        rt_poses, degenerate_pose_perc = do_pose_estimation(matches, query_images_names, query_images_path, params.est_img_save_path)
         np.save(params.poses_save_path, rt_poses)
         print("Pose estimating is done!")
 
     # compute the error metrics for the estimated poses
-    evaluate_est_pose(rt_poses, params)
+    t_error, r_error, maa = evaluate_est_pose(rt_poses, params)
+    pose_errs = [t_error, r_error, maa]
+    avg_match_time = sum(matching_time.values()) / len(matching_time)
+    record_result(params.report_path, method, pose_errs, avg_match_time, degenerate_pose_perc)
+    # clf = get_trained_classify_model(params)
+    # test_classify_model(clf, params)
+
+
+def record_result(report_path, method, pose_err, match_time, degenerate_perc):
+    with open(report_path, 'w') as f:
+        f.write("Method: " + method)
+        f.write('\n')
+        f.write("Translation error: " + str(pose_err[0]))
+        f.write('\n')
+        f.write("Rotation error: " + str(pose_err[1]))
+        f.write('\n')
+        f.write("Mean Average Accuracy: " + str(pose_err[2]))
+        f.write('\n')
+        f.write("Average matching time: " + str(match_time))
+        f.write('\n')
+        f.write("Degenerate pose percentage: " + str(degenerate_perc * 100) + "%")
+        f.write('\n')
 
 
 if __name__ == "__main__":

@@ -38,7 +38,7 @@ def evaluate_est_pose(poses_est, params):
     # loop over the estimated poses to compute the error
     r_errors = {}
     t_errors = {}
-    session_id = params.dataset_id
+    session_id = params.session_id
     for img_nm in poses_est.keys():
         print("evaluate the query image: " + img_nm, end="\r")
         gt_img_nm = "session_" + session_id + "/" + img_nm
@@ -94,6 +94,8 @@ def evaluate_est_pose(poses_est, params):
     # save the errors
     np.save(params.pose_rot_err_save_path, r_errors)
     np.save(params.pose_translation_err_save_path, t_errors)
+
+    return t_err_avg, r_err_avg, maa[0]
 
 
 def get_image_pose(db, query_image):

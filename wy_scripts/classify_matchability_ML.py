@@ -25,8 +25,8 @@ def main():
     create_ML_training_data(parameters.ml_db_path, live_model_points3D, live_model_images, db_live)
 
     # ------ train the classifier model ------
-    clf_model = get_trained_classify_model(parameters)
-    test_classify_model(clf_model, parameters)
+    # clf_model = get_trained_classify_model(parameters)
+    # test_classify_model(clf_model, parameters)
 
 
 def get_trained_classify_model(parameters):
@@ -127,7 +127,8 @@ def test_classify_model(clf_model, params):
     gt_test_data = get_ml_test_data(params)
     X_test = gt_test_data[:, 0:128]
     y_true = gt_test_data[:, 128].astype(np.uint8)
-    y_pred_class = clf_model.predict(X_test)
+    y_pred_pos = clf_model.predict(X_test)
+    y_pred_class = y_pred_pos > 0.5
 
     print("Evaluating the model")
     cm = confusion_matrix(y_true, y_pred_class)
@@ -145,6 +146,15 @@ def test_classify_model(clf_model, params):
     # shouldn't be used on imbalanced problem
     accuracy = accuracy_score(y_true, y_pred_class)  # or optionally (tp + tn) / (tp + fp + fn + tn)
     print("Accuracy score: " + str(accuracy))
+    with open(params.clf_ml_metrics_path, 'w') as f:
+        f.write("Precision score: " + str(precision))
+        f.write('\n')
+        f.write("Recall score: " + str(recall))
+        f.write('\n')
+        f.write("Specificity score: " + str(specificity))
+        f.write('\n')
+        f.write("Accuracy score: " + str(accuracy))
+        f.write('\n')
 
 
 def get_ml_test_data(params):

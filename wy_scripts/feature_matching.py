@@ -16,7 +16,8 @@ def get_keypoints_xy(db, image_id):
     query_image_keypoints_data_cols = int(query_image_keypoints_data_cols.fetchone()[0])
     query_image_keypoints_data = db.blob_to_array(query_image_keypoints_data, np.float32)
     query_image_keypoints_data_rows = int(np.shape(query_image_keypoints_data)[0] / query_image_keypoints_data_cols)
-    query_image_keypoints_data = query_image_keypoints_data.reshape(query_image_keypoints_data_rows, query_image_keypoints_data_cols)
+    query_image_keypoints_data = query_image_keypoints_data.reshape(query_image_keypoints_data_rows,
+                                                                    query_image_keypoints_data_cols)
     query_image_keypoints_data_xy = query_image_keypoints_data[:, 0:2]
     return query_image_keypoints_data_xy
 
@@ -44,7 +45,8 @@ def get_camera_matrix(db, query_img):
     return camera_data
 
 
-def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, params, clf_model, verbose=False, points_scores_array=None):
+def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, params, clf_model, verbose=False,
+                            points_scores_array=None):
     ratio_test_val = params.ratio_test_val
     session_id = params.session_id
     # create image_name <-> matches, dict - easier to work with
@@ -52,6 +54,8 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, pa
     matches_sum = []
     matching_time = {}
     matchable_threshold = 0.5
+    query_desc_num = 0
+    filtered_query_desc_num = 0
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
@@ -61,37 +65,60 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, pa
         # keypoints data
         keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
+        origin_desc_len = len(queryDescriptors)
+        query_desc_num += origin_desc_len
         running_time = 0
+        clf_running_time = 0
 
         if clf_model is not None:
             start_time = time.time()
             pred_matchable = clf_model.predict(queryDescriptors)
             elapsed_time = time.time() - start_time
-            running_time += elapsed_time
+            clf_running_time += elapsed_time
+
+            # Yuxin - TODO: print clf_running_time here
+            print("Prediction time of rf model: " + str(clf_running_time), end="\r")
 
             matchable_desc_indices = np.where(pred_matchable > matchable_threshold)[0]
             keypoints_xy = keypoints_xy[matchable_desc_indices]
             queryDescriptors = queryDescriptors[matchable_desc_indices]
+            print("Matching image " + query_image + "Percentage of matchable descriptors after filtering: " +
+                  str(len(queryDescriptors)/origin_desc_len), end="\r")
+            filtered_query_desc_num += len(queryDescriptors)
 
-            # matrix = get_camera_matrix(db, query_image)
-        FLANN_INDEX_KDTREE = 0
-        index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
-        search_params = dict(checks=50)
-        start_time = time.time()
-        # matcher = cv2.FlannBasedMatcher(index_params, search_params)
-        matcher = cv2.BFMatcher()
-        # Matching on trainDescriptors (remember these are the means of the 3D points)
-        temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
-        knn_end_time = time.time()
-        knn_elapsed_time = knn_end_time - start_time
+        # FLANN_INDEX_KDTREE = 0
+        # index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
+        # search_params = dict(checks=50)
+        # fl_matcher = cv2.FlannBasedMatcher(index_params, search_params)
+        # fl_start_time = time.time()
+        # fl_temp_matches = fl_matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
+        # fl_end_time = time.time()
+        # fl_elapsed_time = fl_end_time - fl_start_time
+        #
+        # # Yuxin - TODO: print fl_elapsed_time here
+        # print("knn_match time of flann matcher: " + str(fl_elapsed_time))
+
+        bf_matcher = cv2.BFMatcher()
+        bf_start_time = time.time()
+        bf_temp_matches = bf_matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
+        bf_end_time = time.time()
+        bf_elapsed_time = bf_end_time - bf_start_time
+        running_time += bf_elapsed_time
+        clf_running_time += bf_elapsed_time
+
+        # Yuxin - TODO: print bf_elapsed_time here
+        # print("knn_match time of bf matcher: " + str(bf_elapsed_time), end="\r")
+
+        temp_matches = bf_temp_matches  # Yuxin feel free to change this
 
         # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
         # m the closest, n is the second closest
+        start_time = time.time()
         good_matches = []
-        for m, n in temp_matches:       # TODO: maybe consider what you have at this point? and add it to the if condition?
-            assert(m.distance <= n.distance)
+        for m, n in temp_matches:  # TODO: maybe consider what you have at this point? and add it to the if condition?
+            assert (m.distance <= n.distance)
             # trainIdx is from 0 to no of points 3D (since each point 3D has a desc), so you can use it as an index here
-            if m.distance < (ratio_test_val * n.distance):          # and (score_m > score_n):
+            if m.distance < (ratio_test_val * n.distance):  # and (score_m > score_n):
                 if m.queryIdx >= keypoints_xy.shape[0]:
                     # keypoints_xy.shape[0] always same as queryDescriptors.shape[0]
                     raise Exception("m.queryIdx error!")
@@ -115,7 +142,11 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, pa
         end_time = time.time()
         elapsed_time = end_time - start_time
         running_time += elapsed_time
-        matching_time[query_image] = running_time
+        clf_running_time += elapsed_time
+        if clf_model is not None:
+            matching_time[query_image] = clf_running_time
+        else:
+            matching_time[query_image] = running_time
         matches[query_image] = np.array(good_matches)
         matches_sum.append(len(good_matches))
         if verbose:
@@ -124,6 +155,9 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, pa
 
     if verbose:
         print()
+        if clf_model is not None:
+            print("Percentage of total matchable descriptors after filtering: " +
+                  str(filtered_query_desc_num / query_desc_num), end="\r")
         total_all_images = np.sum(matches_sum)
         print("Total matches: " + str(total_all_images) + ", no of images " + str(len(query_images)))
         matches_all_avg = total_all_images / len(matches_sum)

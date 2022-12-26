@@ -22,8 +22,8 @@ def do_pose_estimation(matches, query_images_names, query_img_path, est_save_pat
     for i in range(len(query_images_names)):
         query_img_nm = query_images_names[i]
         query_matches = matches.get(query_img_nm)
-        if query_matches is None:
-            print("No matches for the query image: " + query_img_nm, end="\r")
+        if (query_matches is None) or (len(query_matches) < 4):
+            print("No enough matches for the query image: " + query_img_nm, end="\r")
             continue
 
         # solve the camera pose matrix
@@ -33,10 +33,8 @@ def do_pose_estimation(matches, query_images_names, query_img_path, est_save_pat
         # matrix = get_camera_matrix(query_db, )
         if "c0" in query_img_nm:
             camera_matrix = c0_intrinsics
-            dist_coeff = c0_dist_coeff
         else:
             camera_matrix = c1_intrinsics
-            dist_coeff = c1_dist_coeff
         ret_val, rvec, tvec, inliers = cv2.solvePnPRansac(objectPoints=obj_pnts, imagePoints=img_pnts, cameraMatrix=camera_matrix,
                                                           distCoeffs=None, iterationsCount=1000, flags=cv2.SOLVEPNP_EPNP)   # SOLVEPNP_ITERATIVE
         if not ret_val:
@@ -75,11 +73,13 @@ def do_pose_estimation(matches, query_images_names, query_img_path, est_save_pat
     print()
 
     print("Total number of images that have enough inliers: " + str(good_img_num))
+    degenerate_pose_perc = (len(query_images_names) - good_img_num) / len(query_images_names)
+    print("Percentage of degenerate poses: " + str(degenerate_pose_perc))
     total_all_images = np.sum(inliers_sum)
     print("Total inliers: " + str(total_all_images) + ", no of images " + str(good_img_num))
     matches_all_avg = total_all_images / len(inliers_sum)
-    print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(good_img_num))
-    return poses
+    print("Average inliers per image: " + str(matches_all_avg) + ", no of images " + str(good_img_num))
+    return poses, degenerate_pose_perc
 
 
 def draw_pnts_on_img(query_img, img_pnts, projected_pnts):

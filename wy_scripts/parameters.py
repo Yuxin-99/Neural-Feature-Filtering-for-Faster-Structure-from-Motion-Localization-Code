@@ -4,7 +4,7 @@ import re
 
 class Parameters(object):
 
-    def __init__(self, dataset_path, session_id):
+    def __init__(self, dataset_path, session_id, method):
         # session_id = int(re.search(r'\d+', dataset_path).group())
         self.session_id = session_id
 
@@ -16,10 +16,10 @@ class Parameters(object):
         self.query_db_path = os.path.join(base_path, "gt/database.db")
         self.query_img_folder = os.path.join(base_path, "gt/images/session_" + self.session_id)
 
-        saved_data_path = os.path.join(base_path, "clf_saved_data")
+        saved_data_path = os.path.join(base_path, method + "_saved_data")
         if not os.path.exists(saved_data_path):
             os.makedirs(saved_data_path)
-        self.results_path = os.path.join(base_path, "clf_results/")
+        self.results_path = os.path.join(base_path, method + "_results/")
         if not os.path.exists(self.results_path):
             os.makedirs(self.results_path)
 
@@ -51,4 +51,7 @@ class Parameters(object):
         os.makedirs(ml_db_dir, exist_ok=True)
         self.ml_db_path = os.path.join(ml_db_dir, "ml_database_all.db")
         self.clf_ml_path = os.path.join(ml_db_dir, "random_forest.joblib")
+        self.clf_ml_metrics_path = os.path.join(ml_db_dir, "ml_metrics.txt")
+
+        self.report_path = os.path.join(base_path, method + "_result_report.txt")
 
