@@ -2,14 +2,16 @@ import numpy as np
 import os
 import sys
 
-from classify_matchability_ML import get_trained_classify_model, test_classify_model
-from database import COLMAPDatabase
-from feature_matching import feature_matcher_wrapper
-from get_points_3D_mean_desc import compute_avg_desc
-from parameters import Parameters
-from pose_estimator import do_pose_estimation
-from pose_evaluator import evaluate_est_pose
-from read_model import read_points3D_binary, get_points3D_xyz
+from wy_scripts.database import COLMAPDatabase
+from wy_scripts.feature_matching import feature_matcher_wrapper
+from wy_scripts.get_points_3D_mean_desc import compute_avg_desc
+from wy_scripts.ML_models.rf_model import get_rf_model
+from wy_scripts.ML_models.svm_model import get_svm_model
+from wy_scripts.parameters import Parameters
+from wy_scripts.pose_estimator import do_pose_estimation
+from wy_scripts.pose_evaluator import evaluate_est_pose
+from wy_scripts.read_model import read_points3D_binary, get_points3D_xyz
+
 
 # python3 main.py ../Dataset/slice7 0
 
@@ -22,8 +24,8 @@ def main():
 
     # construct the parameters
     base_path = sys.argv[1]  # e.g.: ../../Dataset/slice7
-    session_id = sys.argv[2]     # session number in gt folder, e.g., 7
-    method = sys.argv[3]    # e.g.: base, clf...
+    session_id = sys.argv[2]  # session number in gt folder, e.g., 7
+    method = sys.argv[3]  # e.g.: base, rf...
     params = Parameters(base_path, session_id, method)
 
     # Read the related files
@@ -34,8 +36,8 @@ def main():
     query_images_names = sorted(os.listdir(query_images_path))
 
     # load the saved matches data file to decide or do the feature matching first
-    matching_timer_on = sys.argv[3] == "timer"  # if we need to record the time of feature matching
-    filter_desc = method == "clf"   # if we want to filter non-matchable descs before matching
+    matching_timer_on = sys.argv[4] == "timer"  # if we need to record the time of feature matching
+    filter_perc = "not available"
     if (os.path.exists(params.matches_save_path)) and (not matching_timer_on):
         matches = np.load(params.matches_save_path, allow_pickle=True).item()
         matching_time = np.load(params.match_times_save_path, allow_pickle=True).item()
@@ -55,13 +57,12 @@ def main():
 
         # do the matching of training descriptors and the query images
         print("start to do matching!")
-        clf = None
-        if filter_desc:
-            # assume the ml database is already created
-            # ------ train the classifier model ------
-            clf = get_trained_classify_model(params)
-        matches, matching_time = feature_matcher_wrapper(db_query, query_images_names, train_descriptors_base,
-                                                         points3D_xyz, params, clf, verbose=True)  # lower thresh
+        clf_model = get_filter_model(method, params)
+        matches, matching_time, filter_percentage = feature_matcher_wrapper(db_query, query_images_names,
+                                                                            train_descriptors_base,
+                                                                            points3D_xyz, params, clf_model,
+                                                                            verbose=True)  # lower thresh
+        filter_perc = str(filter_percentage * 100) + "%"
         print("matching is done!")
         np.save(params.matches_save_path, matches)
         np.save(params.match_times_save_path, matching_time)
@@ -76,7 +77,8 @@ def main():
         print("Load poses from file " + params.poses_save_path + "!")
     else:
         print("start to do pose estimating")
-        rt_poses, degenerate_pose_perc = do_pose_estimation(matches, query_images_names, query_images_path, params.est_img_save_path)
+        rt_poses, degenerate_pose_perc = do_pose_estimation(matches, query_images_names, query_images_path,
+                                                            params.est_img_save_path)
         np.save(params.poses_save_path, rt_poses)
         print("Pose estimating is done!")
 
@@ -84,12 +86,26 @@ def main():
     t_error, r_error, maa = evaluate_est_pose(rt_poses, params)
     pose_errs = [t_error, r_error, maa]
     avg_match_time = sum(matching_time.values()) / len(matching_time)
-    record_result(params.report_path, method, pose_errs, avg_match_time, degenerate_pose_perc)
-    # clf = get_trained_classify_model(params)
-    # test_classify_model(clf, params)
+    record_result(params.report_path, method, pose_errs, avg_match_time, degenerate_pose_perc, filter_perc)
 
 
-def record_result(report_path, method, pose_err, match_time, degenerate_perc):
+# return bool: indicate if we need to filter non-matchable descriptors;
+#        clf_model: the classifier model we will use for filtering
+def get_filter_model(method, params):
+    # assume the ml database is already created
+    if method == "rf":
+        return True, get_rf_model(params, False)
+    elif method == "rf_xy":
+        return True, get_rf_model(params, True)
+    elif method == "svm":
+        return True, get_svm_model(params)
+    elif method == "rf_xy":
+        return True, get_rf_model(params, True)
+    else:
+        return False, None
+
+
+def record_result(report_path, method, pose_err, match_time, degenerate_perc, filter_perc):
     with open(report_path, 'w') as f:
         f.write("Method: " + method)
         f.write('\n')
@@ -102,6 +118,8 @@ def record_result(report_path, method, pose_err, match_time, degenerate_perc):
         f.write("Average matching time: " + str(match_time))
         f.write('\n')
         f.write("Degenerate pose percentage: " + str(degenerate_perc * 100) + "%")
+        f.write('\n')
+        f.write("Filtered descriptor percentage: " + filter_perc)
         f.write('\n')
 
 

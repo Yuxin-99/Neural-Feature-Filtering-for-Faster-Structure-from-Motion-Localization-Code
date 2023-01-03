@@ -1,12 +1,9 @@
 import cv2
-import pycolmap
-from database import COLMAPDatabase
 import matplotlib.pyplot as plt
 import matplotlib.transforms as transforms
 import numpy as np
-import os
 
-from read_model import read_images_binary
+from wy_scripts.read_model import read_images_binary
 
 eps = 1e-15
 

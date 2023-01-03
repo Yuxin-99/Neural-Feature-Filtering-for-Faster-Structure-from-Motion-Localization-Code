@@ -6,7 +6,7 @@ import time
 
 from itertools import chain
 
-from read_model import get_image_id
+from wy_scripts.read_model import get_image_id
 
 
 def get_keypoints_xy(db, image_id):
@@ -71,8 +71,11 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, pa
         clf_running_time = 0
 
         if clf_model is not None:
+            X_queryDesc = queryDescriptors
+            if params.method == "rf_xy":
+                X_queryDesc = np.c_[queryDescriptors, keypoints_xy]
             start_time = time.time()
-            pred_matchable = clf_model.predict(queryDescriptors)
+            pred_matchable = clf_model.predict(X_queryDesc)
             elapsed_time = time.time() - start_time
             clf_running_time += elapsed_time
 
@@ -84,8 +87,8 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, pa
             queryDescriptors = queryDescriptors[matchable_desc_indices]
             print("Matching image " + query_image + "Percentage of matchable descriptors after filtering: " +
                   str(len(queryDescriptors)/origin_desc_len), end="\r")
-            filtered_query_desc_num += len(queryDescriptors)
 
+        filtered_query_desc_num += len(queryDescriptors)
         # FLANN_INDEX_KDTREE = 0
         # index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
         # search_params = dict(checks=50)
@@ -155,16 +158,16 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, pa
 
     if verbose:
         print()
-        if clf_model is not None:
-            print("Percentage of total matchable descriptors after filtering: " +
-                  str(filtered_query_desc_num / query_desc_num), end="\r")
+        filter_percentage = 1 - filtered_query_desc_num / query_desc_num
+        print("Percentage of non-matchable descriptors which are filtered out: " + str(filter_percentage))
+
         total_all_images = np.sum(matches_sum)
         print("Total matches: " + str(total_all_images) + ", no of images " + str(len(query_images)))
         matches_all_avg = total_all_images / len(matches_sum)
         print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
 
     draw_time_plt(matching_time, params.results_path)
-    return matches, matching_time
+    return matches, matching_time, filter_percentage
 
 
 def draw_time_plt(img_times, save_path):

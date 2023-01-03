@@ -1,21 +1,21 @@
 import numpy as np
-import joblib
 import os
 import sys
-import time
-from tqdm import tqdm
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix, precision_score, recall_score, accuracy_score
+from tqdm import tqdm
 
-from database import COLMAPDatabase
-from parameters import Parameters
-from read_model import read_images_binary, read_points3D_binary, load_images_from_text_file, get_localised_image_by_names, get_image_id
+from wy_scripts.database import COLMAPDatabase
+from wy_scripts.parameters import Parameters
+from wy_scripts.read_model import read_images_binary, read_points3D_binary, load_images_from_text_file, get_localised_image_by_names, get_image_id
+from rf_model import get_rf_model
+from svm_model import get_svm_model
 
 
 def main():
     base_path = sys.argv[1]
     session_id = sys.argv[2]
-    parameters = Parameters(base_path, session_id)
+    parameters = Parameters(base_path, session_id, "base")
+    feature_with_xy = sys.argv[3] == 1
 
     # ------ generate the dataset for training the classifier model ------
     db_live = COLMAPDatabase.connect(parameters.live_db_path)
@@ -25,21 +25,10 @@ def main():
     create_ML_training_data(parameters.ml_db_path, live_model_points3D, live_model_images, db_live)
 
     # ------ train the classifier model ------
-    # clf_model = get_trained_classify_model(parameters)
-    # test_classify_model(clf_model, parameters)
-
-
-def get_trained_classify_model(parameters):
-    # ------ train the classifier model ------
-    if not os.path.exists(parameters.clf_ml_path):
-        print("Training the model")
-        start_time = time.time()
-        classify_model = train_classify_model(parameters.ml_db_path)
-        print("Finish training! Time: %s seconds" % (time.time() - start_time))
-        joblib.dump(classify_model, parameters.clf_ml_path)
-    else:
-        classify_model = joblib.load(parameters.clf_ml_path)
-    return classify_model
+    # clf_model = get_rf_model(parameters, feature_with_xy)
+    clf_model = get_svm_model(parameters)
+    gt_test_data = get_ml_test_data(parameters)
+    test_classify_model(clf_model, gt_test_data, feature_with_xy, parameters.svm_ml_metrics_path)
 
 
 def get_image_decs(db, image_id):
@@ -101,62 +90,6 @@ def create_ML_training_data(ml_db_path, points3D, images, db):
     print("Ratio of Positives to Negatives Classes: " + str(ratio))
 
 
-def train_classify_model(ml_db_path):
-    ml_database = COLMAPDatabase.connect(ml_db_path)
-    # load the X, Y
-    data = ml_database.execute("SELECT sift, matched FROM data").fetchall()
-
-    sift_vecs = (COLMAPDatabase.blob_to_array(row[0], np.uint8) for row in data)
-    sift_vecs = np.array(list(sift_vecs))
-
-    classes = (row[1] for row in data)  # binary values
-    classes = np.array(list(classes))
-
-    shuffled_idxs = np.random.permutation(sift_vecs.shape[0])
-    sift_vecs = sift_vecs[shuffled_idxs]
-    classes = classes[shuffled_idxs]
-    clf = RandomForestClassifier(n_estimators=25, max_depth=25)
-
-    clf.fit(sift_vecs, classes)
-    return clf
-
-
-def test_classify_model(clf_model, params):
-    # ------ test and evaluate the classifier model ------
-    print("Testing the model")
-    gt_test_data = get_ml_test_data(params)
-    X_test = gt_test_data[:, 0:128]
-    y_true = gt_test_data[:, 128].astype(np.uint8)
-    y_pred_pos = clf_model.predict(X_test)
-    y_pred_class = y_pred_pos > 0.5
-
-    print("Evaluating the model")
-    cm = confusion_matrix(y_true, y_pred_class)
-    tn, fp, fn, tp = cm.ravel()
-    # how many observations predicted as positive are in fact positive.
-    precision = precision_score(y_true, y_pred_class)  # or optionally tp/ (tp + fp)
-    print("Precision score: " + str(precision))
-    # true positive rate: how many observations out of all positive observations have we classified as positive
-    recall = recall_score(y_true, y_pred_class)  # or optionally tp / (tp + fn)
-    print("Recall score: " + str(recall))
-    # true negative rate: how many observations out of all negative observations have we classified as negative
-    specificity = tn / (tn + fp)
-    print("Specificity score: " + str(specificity))
-    # how many observations, both positive and negative, were correctly classified.
-    # shouldn't be used on imbalanced problem
-    accuracy = accuracy_score(y_true, y_pred_class)  # or optionally (tp + tn) / (tp + fp + fn + tn)
-    print("Accuracy score: " + str(accuracy))
-    with open(params.clf_ml_metrics_path, 'w') as f:
-        f.write("Precision score: " + str(precision))
-        f.write('\n')
-        f.write("Recall score: " + str(recall))
-        f.write('\n')
-        f.write("Specificity score: " + str(specificity))
-        f.write('\n')
-        f.write("Accuracy score: " + str(accuracy))
-        f.write('\n')
-
-
 def get_ml_test_data(params):
     # get test data too (gt = query as we know)
     db_gt = COLMAPDatabase.connect(params.query_db_path)
@@ -167,7 +100,7 @@ def get_ml_test_data(params):
     gt_points_3D = read_points3D_binary(params.query_points_bin_path)
     gt_model_images = read_images_binary(params.query_gt_img_bin_path)
 
-    data_to_write = np.empty([0, 129])
+    data_to_write = np.empty([0, 131])
     for loc_img_name in tqdm(localised_query_images_names):
         image_id = get_image_id(db_gt, loc_img_name)
         image = gt_model_images[int(image_id)]
@@ -188,9 +121,48 @@ def get_ml_test_data(params):
             matched_values.append(matched)
 
         matched_values = np.array(matched_values).reshape(rows, 1)
-        data = np.c_[descs, matched_values]
+        data = np.c_[descs, image.xys]
+        data = np.c_[data, matched_values]
         data_to_write = np.r_[data_to_write, data]
     return data_to_write.astype(np.float32)
+
+
+def test_classify_model(clf_model, gt_test_data, with_xy, ml_metrics_path):
+    # ------ test and evaluate the classifier model ------
+    print("Testing the model")
+    if with_xy:
+        X_test = gt_test_data[:, 0:130]
+    else:
+        X_test = gt_test_data[:, 0:128]
+    y_true = gt_test_data[:, 130].astype(np.uint8)
+    y_pred_pos = clf_model.predict(X_test)
+    y_pred_class = y_pred_pos > 0.5
+
+    print("Evaluating the model")
+    cm = confusion_matrix(y_true, y_pred_class)
+    tn, fp, fn, tp = cm.ravel()
+    # how many observations predicted as positive are in fact positive.
+    precision = precision_score(y_true, y_pred_class)  # or optionally tp/ (tp + fp)
+    print("Precision score: " + str(precision))
+    # true positive rate: how many observations out of all positive observations have we classified as positive
+    recall = recall_score(y_true, y_pred_class)  # or optionally tp / (tp + fn)
+    print("Recall score: " + str(recall))
+    # true negative rate: how many observations out of all negative observations have we classified as negative
+    specificity = tn / (tn + fp)
+    print("Specificity score: " + str(specificity))
+    # how many observations, both positive and negative, were correctly classified.
+    # shouldn't be used on imbalanced problem
+    accuracy = accuracy_score(y_true, y_pred_class)  # or optionally (tp + tn) / (tp + fp + fn + tn)
+    print("Accuracy score: " + str(accuracy))
+    with open(ml_metrics_path, 'w') as f:
+        f.write("Precision score: " + str(precision))
+        f.write('\n')
+        f.write("Recall score: " + str(recall))
+        f.write('\n')
+        f.write("Specificity score: " + str(specificity))
+        f.write('\n')
+        f.write("Accuracy score: " + str(accuracy))
+        f.write('\n')
 
 
 if __name__ == "__main__":

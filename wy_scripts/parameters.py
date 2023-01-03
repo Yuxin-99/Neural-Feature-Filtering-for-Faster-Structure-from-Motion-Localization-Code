@@ -7,6 +7,7 @@ class Parameters(object):
     def __init__(self, dataset_path, session_id, method):
         # session_id = int(re.search(r'\d+', dataset_path).group())
         self.session_id = session_id
+        self.method = method
 
         base_path = os.path.join(dataset_path, "exmaps_data")
         self.train_database_path = os.path.join(base_path, "base/database.db")
@@ -48,10 +49,16 @@ class Parameters(object):
 
         # make sure you delete the databases (.db) file first! and "ML_data" folder has to be created manually
         ml_db_dir = os.path.join(dataset_path, "ML_data/")
+        # ml_db_dir = os.path.join(dataset_path, "ML_xy_data/")
         os.makedirs(ml_db_dir, exist_ok=True)
         self.ml_db_path = os.path.join(ml_db_dir, "ml_database_all.db")
-        self.clf_ml_path = os.path.join(ml_db_dir, "random_forest.joblib")
-        self.clf_ml_metrics_path = os.path.join(ml_db_dir, "ml_metrics.txt")
+        self.rf_model_path = os.path.join(ml_db_dir, "random_forest.joblib")
+        self.rf_ml_metrics_path = os.path.join(ml_db_dir, "rf_metrics.txt")
+        self.rf_xy_model_path = os.path.join(ml_db_dir, "random_forest_xy.joblib")
+        self.rf_xy_ml_metrics_path = os.path.join(ml_db_dir, "ml_metrics_xy.txt")
+
+        self.svm_model_path = os.path.join(ml_db_dir, "svm.joblib")
+        self.svm_ml_metrics_path = os.path.join(ml_db_dir, "svm_metrics.txt")
 
         self.report_path = os.path.join(base_path, method + "_result_report.txt")
 
