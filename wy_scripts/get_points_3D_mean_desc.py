@@ -13,8 +13,8 @@
 
 import sys
 import numpy as np
-from wy_scripts.database import COLMAPDatabase
-from wy_scripts.read_model import read_points3D_binary
+from database import COLMAPDatabase
+from read_model import read_points3D_binary
 
 
 def compute_avg_desc(db_path, points3D_path):

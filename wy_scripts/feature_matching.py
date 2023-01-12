@@ -6,7 +6,7 @@ import time
 
 from itertools import chain
 
-from wy_scripts.read_model import get_image_id
+from read_model import get_image_id
 
 
 def get_keypoints_xy(db, image_id):

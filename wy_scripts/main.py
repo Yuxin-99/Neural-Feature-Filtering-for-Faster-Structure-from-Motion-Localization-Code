@@ -2,15 +2,15 @@ import numpy as np
 import os
 import sys
 
-from wy_scripts.database import COLMAPDatabase
-from wy_scripts.feature_matching import feature_matcher_wrapper
-from wy_scripts.get_points_3D_mean_desc import compute_avg_desc
-from wy_scripts.ML_models.rf_model import get_rf_model
-from wy_scripts.ML_models.svm_model import get_svm_model
-from wy_scripts.parameters import Parameters
-from wy_scripts.pose_estimator import do_pose_estimation
-from wy_scripts.pose_evaluator import evaluate_est_pose
-from wy_scripts.read_model import read_points3D_binary, get_points3D_xyz
+from database import COLMAPDatabase
+from feature_matching import feature_matcher_wrapper
+from get_points_3D_mean_desc import compute_avg_desc
+from rf_model import get_rf_model
+from svm_model import get_svm_model
+from parameters import Parameters
+from pose_estimator import do_pose_estimation
+from pose_evaluator import evaluate_est_pose
+from read_model import read_points3D_binary, get_points3D_xyz
 
 
 # python3 main.py ../Dataset/slice7 0

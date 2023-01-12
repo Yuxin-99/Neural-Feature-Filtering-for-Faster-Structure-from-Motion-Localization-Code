@@ -4,9 +4,9 @@ import sys
 from sklearn.metrics import confusion_matrix, precision_score, recall_score, accuracy_score
 from tqdm import tqdm
 
-from wy_scripts.database import COLMAPDatabase
-from wy_scripts.parameters import Parameters
-from wy_scripts.read_model import read_images_binary, read_points3D_binary, load_images_from_text_file, get_localised_image_by_names, get_image_id
+from database import COLMAPDatabase
+from parameters import Parameters
+from read_model import read_images_binary, read_points3D_binary, load_images_from_text_file, get_localised_image_by_names, get_image_id
 from rf_model import get_rf_model
 from svm_model import get_svm_model
 

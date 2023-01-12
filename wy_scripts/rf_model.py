@@ -1,9 +1,10 @@
 import joblib
 import numpy as np
+import os
 from sklearn.ensemble import RandomForestClassifier
 import time
-import os
-from wy_scripts.database import COLMAPDatabase
+
+from database import COLMAPDatabase
 
 
 def get_rf_model(params, with_xy):

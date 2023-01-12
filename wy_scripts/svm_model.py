@@ -1,9 +1,10 @@
 import joblib
 import numpy as np
+import os
 from sklearn import svm
 import time
-import os
-from wy_scripts.database import COLMAPDatabase
+
+from database import COLMAPDatabase
 
 
 def get_svm_model(params):
@@ -35,7 +36,12 @@ def train_svm_model(ml_db_path):
     sift_vecs = sift_vecs[shuffled_idxs]
     classes = classes[shuffled_idxs]
 
-    clf = svm.SVC()
-    clf.fit(sift_vecs, classes)
-    return clf
+    train_size = int(np.ceil(0.2 * len(sift_vecs)))
+    X_train = sift_vecs[0:train_size]
+    Y_train = classes[0:train_size]
+    print("Training dataset size: " + str(len(X_train)))
 
+    clf = svm.SVC()
+    # clf = svm.SVC(kernel='linear')
+    clf.fit(X_train, Y_train)
+    return clf
