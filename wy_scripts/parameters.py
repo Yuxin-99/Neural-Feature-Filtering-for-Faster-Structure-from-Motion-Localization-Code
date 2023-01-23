@@ -57,8 +57,15 @@ class Parameters(object):
         self.rf_xy_model_path = os.path.join(ml_db_dir, "random_forest_xy.joblib")
         self.rf_xy_ml_metrics_path = os.path.join(ml_db_dir, "ml_metrics_xy.txt")
 
-        self.svm_model_path = os.path.join(ml_db_dir, "svm.joblib")
-        self.svm_ml_metrics_path = os.path.join(ml_db_dir, "svm_metrics.txt")
+        svm_dir = os.path.join(ml_db_dir, "svm/")
+        os.makedirs(svm_dir, exist_ok=True)
+        self.svm_model_path = os.path.join(svm_dir, "svm.joblib")
+        self.svm_ml_metrics_path = os.path.join(svm_dir, "svm_metrics.txt")
+        self.X_memmap_path = os.path.join(svm_dir, "X_memmap.npy")
+        self.Y_memmap_path = os.path.join(svm_dir, "Y_memmap.npy")
+
+        self.sgd_model_path = os.path.join(ml_db_dir, "sgd.joblib")
+        self.sgd_ml_metrics_path = os.path.join(ml_db_dir, "sgd_metrics.txt")
 
         self.report_path = os.path.join(base_path, method + "_result_report.txt")
 

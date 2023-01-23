@@ -57,7 +57,7 @@ def main():
 
         # do the matching of training descriptors and the query images
         print("start to do matching!")
-        clf_model = get_filter_model(method, params)
+        do_filter, clf_model = get_filter_model(method, params)
         matches, matching_time, filter_percentage = feature_matcher_wrapper(db_query, query_images_names,
                                                                             train_descriptors_base,
                                                                             points3D_xyz, params, clf_model,
