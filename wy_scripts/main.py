@@ -5,8 +5,9 @@ import sys
 from database import COLMAPDatabase
 from feature_matching import feature_matcher_wrapper
 from get_points_3D_mean_desc import compute_avg_desc
+from kerasNN_model import get_kerasNN_model
 from rf_model import get_rf_model
-from svm_model import get_svm_model
+from svm_model import get_svm_model, get_sgd_model
 from parameters import Parameters
 from pose_estimator import do_pose_estimation
 from pose_evaluator import evaluate_est_pose
@@ -99,8 +100,10 @@ def get_filter_model(method, params):
         return True, get_rf_model(params, True)
     elif method == "svm":
         return True, get_svm_model(params)
-    elif method == "rf_xy":
-        return True, get_rf_model(params, True)
+    elif method == "sgd":
+        return True, get_sgd_model(params)
+    elif method == "kerasNN":
+        return True, get_kerasNN_model(params)
     else:
         return False, None
 

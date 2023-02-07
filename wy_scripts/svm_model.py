@@ -47,8 +47,8 @@ def train_svm_model(ml_db_path, X_memmap_path, Y_memmap_path):
     Y_fp[:] = classes[:]
     Y_fp.flush()
 
-    X_train = np.memmap(X_memmap_path)
-    Y_train = np.memmap(Y_memmap_path)
+    X_train = np.memmap(X_memmap_path, dtype='float64', shape=sift_vecs.shape)
+    Y_train = np.memmap(Y_memmap_path, dtype='int64', shape=classes.shape)
 
     print("Training the support vector machine model")
     start_time = time.time()

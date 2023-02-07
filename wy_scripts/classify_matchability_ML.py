@@ -9,6 +9,7 @@ from parameters import Parameters
 from read_model import read_images_binary, read_points3D_binary, load_images_from_text_file, get_localised_image_by_names, get_image_id
 from rf_model import get_rf_model
 from svm_model import get_svm_model, get_sgd_model
+from kerasNN_model import get_kerasNN_model
 
 
 def main():
@@ -26,9 +27,9 @@ def main():
 
     # ------ train the classifier model ------
     # clf_model = get_rf_model(parameters, feature_with_xy)
-    clf_model = get_sgd_model(parameters)
+    clf_model = get_kerasNN_model(parameters)
     gt_test_data = get_ml_test_data(parameters)
-    test_classify_model(clf_model, gt_test_data, feature_with_xy, parameters.sgd_ml_metrics_path)
+    test_classify_model(clf_model, gt_test_data, feature_with_xy, parameters.kerasNN_metrics_path)
 
 
 def get_image_decs(db, image_id):

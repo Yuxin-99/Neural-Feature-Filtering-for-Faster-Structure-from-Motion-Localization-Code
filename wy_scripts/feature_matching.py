@@ -72,7 +72,7 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, pa
 
         if clf_model is not None:
             X_queryDesc = queryDescriptors
-            if params.method == "rf_xy":
+            if params.method != "rf":
                 X_queryDesc = np.c_[queryDescriptors, keypoints_xy]
             start_time = time.time()
             pred_matchable = clf_model.predict(X_queryDesc)

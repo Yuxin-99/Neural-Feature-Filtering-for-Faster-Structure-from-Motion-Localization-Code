@@ -67,5 +67,8 @@ class Parameters(object):
         self.sgd_model_path = os.path.join(ml_db_dir, "sgd.joblib")
         self.sgd_ml_metrics_path = os.path.join(ml_db_dir, "sgd_metrics.txt")
 
+        self.kerasNN_model_path = os.path.join(ml_db_dir, "kerasNNModel")
+        self.kerasNN_metrics_path = os.path.join(ml_db_dir, "kerasNN_metrics.txt")
+
         self.report_path = os.path.join(base_path, method + "_result_report.txt")
 

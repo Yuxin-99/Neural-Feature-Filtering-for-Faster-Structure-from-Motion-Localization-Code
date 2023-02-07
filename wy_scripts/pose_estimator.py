@@ -88,7 +88,7 @@ def draw_pnts_on_img(query_img, img_pnts, projected_pnts):
         # draw the original 2d points on the query image
         img_pnt = img_pnts[m]
         query_color = (255, 0, 0)
-        res_img = cv2.circle(res_img, (int(img_pnt[0]), int(img_pnt[1])), 4, query_color, -1)
+        res_img = cv2.circle(res_img, (int(img_pnt[0]), int(img_pnt[1])), 12, query_color, -1)
 
         # draw all the projected 3d points on the query image
         projected_pnt = projected_pnts[m][0]
@@ -97,7 +97,7 @@ def draw_pnts_on_img(query_img, img_pnts, projected_pnts):
         if (projected_pnt[0] >= 1024) or (projected_pnt[1] >= 768):
             continue
         projected_color = (0, 0, 255)
-        res_img = cv2.circle(res_img, (int(projected_pnt[0]), int(projected_pnt[1])), 4, projected_color, -1)
+        res_img = cv2.circle(res_img, (int(projected_pnt[0]), int(projected_pnt[1])), 8, projected_color, -1)
 
     return res_img
 
