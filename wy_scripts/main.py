@@ -33,7 +33,7 @@ def main():
     points3D_file_path = params.live_model_points3D_path  # points3D.bin from the training model (provided by dataset)
     query_database_path = params.query_db_path
     db_query = COLMAPDatabase.connect(query_database_path)  # database of the query images
-    query_images_path = params.query_img_folder  # path to the folder that contains the query images
+    query_images_path = params.query_img_folder + "session_" + params.session_id + "/"  # path to the folder that contains the query images
     query_images_names = sorted(os.listdir(query_images_path))
 
     # load the saved matches data file to decide or do the feature matching first
@@ -87,7 +87,7 @@ def main():
     t_error, r_error, maa = evaluate_est_pose(rt_poses, params)
     pose_errs = [t_error, r_error, maa]
     avg_match_time = sum(matching_time.values()) / len(matching_time)
-    record_result(params.report_path, method, pose_errs, avg_match_time, degenerate_pose_perc, filter_perc)
+    record_result(params.report_path, params.slice_id, method, pose_errs, avg_match_time, degenerate_pose_perc, filter_perc)
 
 
 # return bool: indicate if we need to filter non-matchable descriptors;
@@ -103,13 +103,17 @@ def get_filter_model(method, params):
     elif method == "sgd":
         return True, get_sgd_model(params)
     elif method == "kerasNN":
-        return True, get_kerasNN_model(params)
+        return True, get_kerasNN_model(params, 0)
+    elif method == "kerasNN_rgb":
+        return True, get_kerasNN_model(params, 1)
     else:
         return False, None
 
 
-def record_result(report_path, method, pose_err, match_time, degenerate_perc, filter_perc):
+def record_result(report_path, slice_id, method, pose_err, match_time, degenerate_perc, filter_perc):
     with open(report_path, 'w') as f:
+        f.write("Data slice: " + slice_id)
+        f.write('\n')
         f.write("Method: " + method)
         f.write('\n')
         f.write("Translation error: " + str(pose_err[0]))

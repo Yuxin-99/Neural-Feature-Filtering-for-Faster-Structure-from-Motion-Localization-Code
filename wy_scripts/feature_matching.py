@@ -6,7 +6,7 @@ import time
 
 from itertools import chain
 
-from read_model import get_image_id
+from read_model import get_image_id, read_image_rgb
 
 
 def get_keypoints_xy(db, image_id):
@@ -74,6 +74,9 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, pa
             X_queryDesc = queryDescriptors
             if params.method != "rf":
                 X_queryDesc = np.c_[queryDescriptors, keypoints_xy]
+            if params.method == "kerasNN_rgb":
+                bgrs = read_image_rgb(query_image_name, params.query_img_folder, keypoints_xy)
+                X_queryDesc = np.c_[X_queryDesc, bgrs]
             start_time = time.time()
             pred_matchable = clf_model.predict(X_queryDesc)
             elapsed_time = time.time() - start_time

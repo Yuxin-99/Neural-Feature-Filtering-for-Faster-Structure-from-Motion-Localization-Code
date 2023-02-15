@@ -13,13 +13,13 @@ from keras.layers import Dense
 from database import COLMAPDatabase
 
 
-def get_kerasNN_model(params):
+def get_kerasNN_model(params, feature_with_rgb):
     ml_path = params.kerasNN_model_path
     # ------ train the classifier model ------
     if not os.path.exists(ml_path):
         print("Training the Keras Neural Network model")
         start_time = time.time()
-        classify_model = train_kerasNN_model(params.ml_db_path)
+        classify_model = train_kerasNN_model(params.ml_db_path, feature_with_rgb)
         print("Finish training! Time: %s seconds" % (time.time() - start_time))
         classify_model.save(ml_path)
     else:
@@ -27,7 +27,7 @@ def get_kerasNN_model(params):
     return classify_model
 
 
-def train_kerasNN_model(ml_db_path):
+def train_kerasNN_model(ml_db_path, feature_with_rgb):
     ml_database = COLMAPDatabase.connect(ml_db_path)
     # load the X, Y training and validation data ########
     data = ml_database.execute("SELECT sift, matched FROM data").fetchall()
@@ -43,6 +43,12 @@ def train_kerasNN_model(ml_db_path):
     xy_coords = (COLMAPDatabase.blob_to_array(row[0], np.float64) for row in xy_cols)
     xy_coords = np.array(list(xy_coords))
     sift_vecs = np.c_[sift_vecs, xy_coords]
+    if feature_with_rgb:
+        bgr_cols = ml_database.execute("SELECT rgb FROM data").fetchall()
+        bgr_coords = (COLMAPDatabase.blob_to_array(row[0], np.float64) for row in bgr_cols)
+        bgr_coords = np.array(list(bgr_coords))
+        sift_vecs = np.c_[sift_vecs, bgr_coords]
+
     X = sift_vecs[shuffled_idxs]
     Y = classes[shuffled_idxs]
 
@@ -53,8 +59,9 @@ def train_kerasNN_model(ml_db_path):
     Y_validate = Y[train_size:]
 
     # define the Keras model ########
+    feature_num = X_train.shape[1]
     model = Sequential()
-    model.add(Dense(130, input_shape=(130,), activation='relu'))
+    model.add(Dense(feature_num, input_shape=(feature_num,), activation='relu'))
     model.add(Dense(60, activation='relu'))
     model.add(Dense(30, activation='relu'))
     model.add(Dense(1, activation='sigmoid'))

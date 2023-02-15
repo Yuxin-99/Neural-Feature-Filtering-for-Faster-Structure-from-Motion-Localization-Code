@@ -2,6 +2,7 @@
 # Neural-Feature-Filtering-for-Faster-Structure-from-Motion-Localization-Code/point3D_loader.py
 
 import collections
+import cv2
 import numpy as np
 import struct
 
@@ -208,3 +209,34 @@ def image_localised(name, images):
             image_id = v.id
             return image_id
     return image_id
+
+
+def read_image_rgb(name, images_path, keypoints_xy):
+    img = cv2.imread(images_path + name)
+    bgrs = np.empty([0, 3])
+    for point_xy in keypoints_xy:
+        # compute the bgr value by bilinear interpolation
+        x_l = int(np.floor(point_xy[0]))
+        x_r = int(np.ceil(point_xy[0]))
+        y_u = int(np.floor(point_xy[1]))
+        y_b = int(np.ceil(point_xy[1]))
+        # handle the image edges
+        up_l = img[y_u, x_l]
+        up_r = 0
+        btm_l = 0
+        btm_r = 0
+        l_weight = 1
+        u_weight = 1
+        if x_r < img.shape[1]:
+            up_r = img[y_u, x_r]
+            l_weight = x_r - point_xy[0]
+        if y_b < img.shape[0]:
+            btm_l = img[y_b, x_l]
+            u_weight = y_b - point_xy[1]
+        if (x_r < img.shape[1]) and (y_b < img.shape[0]):
+            btm_r = img[y_b, x_r]
+        up_val = up_l * l_weight + up_r * (1 - l_weight)
+        btm_val = btm_l * l_weight + btm_r * (1 - l_weight)
+        bgr = up_val * u_weight + btm_val * (1 - u_weight)
+        bgrs = np.r_[bgrs, np.array([bgr])]
+    return bgrs

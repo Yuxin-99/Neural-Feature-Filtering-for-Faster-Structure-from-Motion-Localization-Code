@@ -81,6 +81,7 @@ class COLMAPDatabase(sqlite3.Connection):
                                                     sift BLOB NOT NULL,
                                                     xyz BLOB NOT NULL,
                                                     xy BLOB NOT NULL,
+                                                    rgb BLOB NOT NULL,
                                                     matched INTEGER NOT NULL
                                                 );"""
         conn = None
