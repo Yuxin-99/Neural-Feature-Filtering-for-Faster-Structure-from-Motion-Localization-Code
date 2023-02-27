@@ -45,9 +45,9 @@ def train_kerasNN_model(ml_db_path, feature_with_rgb):
     sift_vecs = np.c_[sift_vecs, xy_coords]
     if feature_with_rgb:
         bgr_cols = ml_database.execute("SELECT rgb FROM data").fetchall()
-        bgr_coords = (COLMAPDatabase.blob_to_array(row[0], np.float64) for row in bgr_cols)
-        bgr_coords = np.array(list(bgr_coords))
-        sift_vecs = np.c_[sift_vecs, bgr_coords]
+        bgrs = (COLMAPDatabase.blob_to_array(row[0], np.float64) for row in bgr_cols)
+        bgrs = np.array(list(bgrs))
+        sift_vecs = np.c_[sift_vecs, bgrs]
 
     X = sift_vecs[shuffled_idxs]
     Y = classes[shuffled_idxs]

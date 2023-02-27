@@ -18,14 +18,14 @@ class Parameters(object):
         self.query_db_path = os.path.join(base_path, "gt/database.db")
         self.query_img_folder = os.path.join(base_path, "gt/images/")
 
-        saved_data_path = os.path.join(base_path, method + "_saved_data")
+        saved_data_path = os.path.join(base_path, "savedData/" + method + "_saved_data")
         if not os.path.exists(saved_data_path):
             os.makedirs(saved_data_path)
-        self.results_path = os.path.join(base_path, method + "_results/")
+        self.results_path = os.path.join(base_path, "results/" + method + "_results/")
         if not os.path.exists(self.results_path):
             os.makedirs(self.results_path)
 
-        self.avg_descs_base_path = os.path.join(saved_data_path, "avg_descs_base.npy")
+        self.avg_descs_base_path = os.path.join(base_path, "avg_descs_base.npy")
         self.matches_save_path = os.path.join(saved_data_path, "matches.npy")
         self.match_times_save_path = os.path.join(self.results_path, "matching_times.npy")
         self.ratio_test_val = 0.85
@@ -53,16 +53,19 @@ class Parameters(object):
         ml_db_dir = os.path.join(dataset_path, "ML_data/")
         # ml_db_dir = os.path.join(dataset_path, "ML_xy_data/")
         os.makedirs(ml_db_dir, exist_ok=True)
-        self.ml_db_path = os.path.join(ml_db_dir, "ml_database_all.db")
-        self.rf_model_path = os.path.join(ml_db_dir, "random_forest.joblib")
-        self.rf_ml_metrics_path = os.path.join(ml_db_dir, slice_id + "_" + "rf_metrics.txt")
-        self.rf_xy_model_path = os.path.join(ml_db_dir, "random_forest_xy.joblib")
-        self.rf_xy_ml_metrics_path = os.path.join(ml_db_dir, slice_id + "_" + "rf_xy_metrics.txt")
+        self.ml_db_path = os.path.join(ml_db_dir, "ml_database_xy.db")
+
+        self.rf_rgb_model_path = os.path.join(ml_db_dir, "rf_rgb.joblib")
+        self.rf_rgb_metrics_path = os.path.join(ml_db_dir, slice_id + "_" + "rf_rgb_metrics.txt")
+        # self.rf_model_path = os.path.join(ml_db_dir, "random_forest.joblib")
+        # self.rf_ml_metrics_path = os.path.join(ml_db_dir, slice_id + "_" + "rf_metrics.txt")
+        self.rf_xy_model_path = os.path.join(ml_db_dir, "rf_xy.joblib")
+        self.rf_xy_metrics_path = os.path.join(ml_db_dir, slice_id + "_" + "rf_xy_metrics.txt")
 
         svm_dir = os.path.join(ml_db_dir, "svm/")
         os.makedirs(svm_dir, exist_ok=True)
         self.svm_model_path = os.path.join(svm_dir, "svm.joblib")
-        self.svm_ml_metrics_path = os.path.join(svm_dir, slice_id + "_" + "svm_metrics.txt")
+        self.svm_metrics_path = os.path.join(svm_dir, slice_id + "_" + "svm_metrics.txt")
         self.X_memmap_path = os.path.join(svm_dir, "X_memmap.npy")
         self.Y_memmap_path = os.path.join(svm_dir, "Y_memmap.npy")
 

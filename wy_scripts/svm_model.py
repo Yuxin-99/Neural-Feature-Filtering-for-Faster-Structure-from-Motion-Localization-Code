@@ -9,18 +9,18 @@ import time
 from database import COLMAPDatabase
 
 
-def get_svm_model(params):
+def get_svm_model(params, with_rgb):
     ml_path = params.svm_model_path
     # ------ train the classifier model ------
     if not os.path.exists(ml_path):
-        classify_model = train_svm_model(params.ml_db_path, params.X_memmap_path, params.Y_memmap_path)
+        classify_model = train_svm_model(with_rgb, params.ml_db_path, params.X_memmap_path, params.Y_memmap_path)
         joblib.dump(classify_model, ml_path)
     else:
         classify_model = joblib.load(ml_path)
     return classify_model
 
 
-def train_svm_model(ml_db_path, X_memmap_path, Y_memmap_path):
+def train_svm_model(with_rgb, ml_db_path, X_memmap_path, Y_memmap_path):
     ml_database = COLMAPDatabase.connect(ml_db_path)
     # load the X, Y
     data = ml_database.execute("SELECT sift, matched FROM data").fetchall()
@@ -59,13 +59,13 @@ def train_svm_model(ml_db_path, X_memmap_path, Y_memmap_path):
     return clf
 
 
-def get_sgd_model(params):
+def get_sgd_model(params, with_rgb):
     ml_path = params.sgd_model_path
     # ------ train the classifier model ------
     if not os.path.exists(ml_path):
         print("Training the SGD Classifier model")
         start_time = time.time()
-        classify_model = train_sgd_model(params.ml_db_path)
+        classify_model = train_sgd_model(params.ml_db_path, with_rgb)
         print("Finish training! Time: %s seconds" % (time.time() - start_time))
         joblib.dump(classify_model, ml_path)
     else:
@@ -79,7 +79,7 @@ def batch(iterable_X, iterable_y, n=1):
         yield iterable_X[ndx:min(ndx + n, length)], iterable_y[ndx:min(ndx + n, length)]
 
 
-def train_sgd_model(ml_db_path):
+def train_sgd_model(ml_db_path, with_rgb):
     ml_database = COLMAPDatabase.connect(ml_db_path)
     # load the X, Y
     data = ml_database.execute("SELECT sift, matched FROM data").fetchall()

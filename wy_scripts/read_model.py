@@ -214,7 +214,8 @@ def image_localised(name, images):
 def read_image_rgb(name, images_path, keypoints_xy):
     img = cv2.imread(images_path + name)
     bgrs = np.empty([0, 3])
-    for point_xy in keypoints_xy:
+    for i in range(keypoints_xy.shape[0]):
+        point_xy = keypoints_xy[i]
         # compute the bgr value by bilinear interpolation
         x_l = int(np.floor(point_xy[0]))
         x_r = int(np.ceil(point_xy[0]))

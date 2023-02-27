@@ -94,10 +94,10 @@ def main():
 #        clf_model: the classifier model we will use for filtering
 def get_filter_model(method, params):
     # assume the ml database is already created
-    if method == "rf":
-        return True, get_rf_model(params, False)
+    if method == "rf_rgb":
+        return True, get_rf_model(params, 1, 1)
     elif method == "rf_xy":
-        return True, get_rf_model(params, True)
+        return True, get_rf_model(params, True, 0)
     elif method == "svm":
         return True, get_svm_model(params)
     elif method == "sgd":
@@ -116,13 +116,13 @@ def record_result(report_path, slice_id, method, pose_err, match_time, degenerat
         f.write('\n')
         f.write("Method: " + method)
         f.write('\n')
-        f.write("Translation error: " + str(pose_err[0]))
+        f.write("Average translation error: " + str(pose_err[0]) + " meters")
         f.write('\n')
-        f.write("Rotation error: " + str(pose_err[1]))
+        f.write("Average rotation error: " + str(pose_err[1]) + " degrees")
         f.write('\n')
         f.write("Mean Average Accuracy: " + str(pose_err[2]))
         f.write('\n')
-        f.write("Average matching time: " + str(match_time))
+        f.write("Average matching time: " + str(match_time) + " seconds")
         f.write('\n')
         f.write("Degenerate pose percentage: " + str(degenerate_perc * 100) + "%")
         f.write('\n')

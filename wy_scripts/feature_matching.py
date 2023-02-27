@@ -74,7 +74,7 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, pa
             X_queryDesc = queryDescriptors
             if params.method != "rf":
                 X_queryDesc = np.c_[queryDescriptors, keypoints_xy]
-            if params.method == "kerasNN_rgb":
+            if "rgb" in params.method:
                 bgrs = read_image_rgb(query_image_name, params.query_img_folder, keypoints_xy)
                 X_queryDesc = np.c_[X_queryDesc, bgrs]
             start_time = time.time()

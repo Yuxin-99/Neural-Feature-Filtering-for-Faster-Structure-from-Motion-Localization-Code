@@ -18,7 +18,7 @@ def main():
     session_id = sys.argv[2]
     parameters = Parameters(base_path, session_id, "base")
     # feature_with_xy = sys.argv[3] == "1"
-    feature_with_rgb = 1
+    feature_with_rgb = sys.argv[3] == "1"
 
     # ------ generate the dataset for training the classifier model ------
     db_live = COLMAPDatabase.connect(parameters.live_db_path)
@@ -28,10 +28,12 @@ def main():
     create_ML_training_data(parameters.ml_db_path, live_model_points3D, live_model_images, db_live, parameters.live_img_folder)
 
     # ------ train the classifier model ------
-    # clf_model = get_rf_model(parameters, feature_with_xy)
-    clf_model = get_kerasNN_model(parameters, feature_with_rgb)
+    # clf_model = get_svm_model(parameters, feature_with_rgb)
+    # clf_model = get_sgd_model(parameters, feature_with_rgb)
+    # clf_model = get_kerasNN_model(parameters, feature_with_rgb)
+    clf_model = get_rf_model(parameters, 1, feature_with_rgb)
     gt_test_data = get_ml_test_data(parameters)
-    test_classify_model(clf_model, gt_test_data, feature_with_rgb, parameters.kerasNN_metrics_path, parameters.slice_id)
+    test_classify_model(clf_model, gt_test_data, feature_with_rgb, parameters.rf_xy_metrics_path, parameters.slice_id)
 
 
 def get_image_decs(db, image_id):
@@ -146,6 +148,7 @@ def test_classify_model(clf_model, gt_test_data, with_rgb, ml_metrics_path, slic
     else:
         X_test = gt_test_data[:, 0:130]
         y_true = gt_test_data[:, 130].astype(np.uint8)
+    # y_true = gt_test_data[:, 133].astype(np.uint8)
     y_pred_pos = clf_model.predict(X_test)
     y_pred_class = y_pred_pos > 0.5
 
