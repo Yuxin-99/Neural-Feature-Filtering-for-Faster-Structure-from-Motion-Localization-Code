@@ -37,7 +37,6 @@ def train_rf_model(ml_db_path, with_xy, with_rgb):
     classes = np.array(list(classes))
 
     shuffled_idxs = np.random.permutation(sift_vecs.shape[0])
-    sift_vecs = sift_vecs[shuffled_idxs]
     if with_xy:
         # add the xy coordinates as additional info to train the model
         xy_cols = ml_database.execute("SELECT xy FROM data").fetchall()

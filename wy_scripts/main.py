@@ -100,12 +100,18 @@ def get_filter_model(method, params):
         return True, get_rf_model(params, True, 0)
     elif method == "svm":
         return True, get_svm_model(params)
-    elif method == "sgd":
-        return True, get_sgd_model(params)
+    elif method == "sgd_xy":
+        return True, get_sgd_model(params, 0)
+    elif method == "sgd_rgb":
+        return True, get_sgd_model(params, 1)
     elif method == "kerasNN":
-        return True, get_kerasNN_model(params, 0)
+        return True, get_kerasNN_model(params, 0, 0)
     elif method == "kerasNN_rgb":
-        return True, get_kerasNN_model(params, 1)
+        return True, get_kerasNN_model(params, 1, 0)
+    elif method == "MSFENN":
+        return True, get_kerasNN_model(params, 0, 1)
+    elif method == "MSFENN_rgb":
+        return True, get_kerasNN_model(params, 1, 1)
     else:
         return False, None
 

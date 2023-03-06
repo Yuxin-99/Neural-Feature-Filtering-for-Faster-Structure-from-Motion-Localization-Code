@@ -61,6 +61,8 @@ def train_svm_model(with_rgb, ml_db_path, X_memmap_path, Y_memmap_path):
 
 def get_sgd_model(params, with_rgb):
     ml_path = params.sgd_model_path
+    if with_rgb:
+        ml_path = params.sgd_rgb_model_path
     # ------ train the classifier model ------
     if not os.path.exists(ml_path):
         print("Training the SGD Classifier model")
@@ -91,12 +93,18 @@ def train_sgd_model(ml_db_path, with_rgb):
     classes = np.array(list(classes))
 
     shuffled_idxs = np.random.permutation(sift_vecs.shape[0])
-    sift_vecs = sift_vecs[shuffled_idxs]
     xy_cols = ml_database.execute("SELECT xy FROM data").fetchall()
     xy_coords = (COLMAPDatabase.blob_to_array(row[0], np.float64) for row in xy_cols)
     xy_coords = np.array(list(xy_coords))
-    xy_coords = xy_coords[shuffled_idxs]
     sift_vecs = np.c_[sift_vecs, xy_coords]
+
+    if with_rgb:
+        bgr_cols = ml_database.execute("SELECT rgb FROM data").fetchall()
+        bgrs = (COLMAPDatabase.blob_to_array(row[0], np.float64) for row in bgr_cols)
+        bgrs = np.array(list(bgrs))
+        sift_vecs = np.c_[sift_vecs, bgrs]
+
+    sift_vecs = sift_vecs[shuffled_idxs]
     classes = classes[shuffled_idxs]
 
     # print("Training dataset size: " + str(len(X_train)))

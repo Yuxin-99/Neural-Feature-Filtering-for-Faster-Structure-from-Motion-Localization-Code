@@ -53,7 +53,7 @@ class Parameters(object):
         ml_db_dir = os.path.join(dataset_path, "ML_data/")
         # ml_db_dir = os.path.join(dataset_path, "ML_xy_data/")
         os.makedirs(ml_db_dir, exist_ok=True)
-        self.ml_db_path = os.path.join(ml_db_dir, "ml_database_xy.db")
+        self.ml_db_path = os.path.join(ml_db_dir, "ml_database_all.db")
 
         self.rf_rgb_model_path = os.path.join(ml_db_dir, "rf_rgb.joblib")
         self.rf_rgb_metrics_path = os.path.join(ml_db_dir, slice_id + "_" + "rf_rgb_metrics.txt")
@@ -71,9 +71,18 @@ class Parameters(object):
 
         self.sgd_model_path = os.path.join(ml_db_dir, "sgd.joblib")
         self.sgd_ml_metrics_path = os.path.join(ml_db_dir, slice_id + "_" + "sgd_metrics.txt")
+        self.sgd_rgb_model_path = os.path.join(ml_db_dir, "sgd_rgb.joblib")
+        self.sgd_rgb_metrics_path = os.path.join(ml_db_dir, slice_id + "_" + "sgd_rgb_metrics.txt")
 
         self.kerasNN_model_path = os.path.join(ml_db_dir, "kerasNNModel")
         self.kerasNN_metrics_path = os.path.join(ml_db_dir, slice_id + "_" + "kerasNN_metrics.txt")
+        self.kerasNN_rgb_path = os.path.join(ml_db_dir, "kerasNNRgbModel")
+        self.kerasNN_rgb_metrics_path = os.path.join(ml_db_dir, slice_id + "_" + "kerasNN_rgb_metrics.txt")
+
+        self.MSFENN_path = os.path.join(ml_db_dir, "MSFENNModel")
+        self.MSFENN_metrics_path = os.path.join(ml_db_dir, slice_id + "_" + "MSFENN_metrics.txt")
+        self.MSFENN_rgb_path = os.path.join(ml_db_dir, "MSFENNRgbModel")
+        self.MSFENN_rgb_metrics_path = os.path.join(ml_db_dir, slice_id + "_" + "MSFENN_rgb_metrics.txt")
 
         self.report_path = os.path.join(base_path, slice_id + "_" + method + "_report.txt")
 
