@@ -2,6 +2,7 @@ import cv2
 import matplotlib.pyplot as plt
 import matplotlib.transforms as transforms
 import numpy as np
+import pandas as pd
 
 from read_model import read_images_binary
 
@@ -33,9 +34,9 @@ def evaluate_est_pose(poses_est, params):
     #                 poses_gt[pose_gt[0]] = np.array(pose_gt[1:8], dtype=np.float64)
 
     # loop over the estimated poses to compute the error
-    r_errors = {}
-    t_errors = {}
+    errors_dict = []    # a list of dictionary: {image id: [0-len(img)], img_name, trans_err, rot_err}
     session_id = params.session_id
+    img_id = 0
     for img_nm in poses_est.keys():
         print("evaluate the query image: " + img_nm, end="\r")
         gt_img_nm = "session_" + session_id + "/" + img_nm
@@ -66,31 +67,35 @@ def evaluate_est_pose(poses_est, params):
         # r_err = compute_rot_mx_err(rq_gt_matrix, r_est_matrix)
         # t_err = compute_trans_error(t_gt, t_est, 1)
         t_err = compute_trans_error(t_gt, camera_center_est[:, 0], 1)
-        r_errors[img_nm] = r_err
-        t_errors[img_nm] = t_err
+        err_dict = {"img_id": img_id, "img_name": img_nm, "rotation_err": r_err, "translation_err": t_err}
+        errors_dict.append(err_dict)
+        img_id += 1
 
     print()
     print("finish computing errors")
 
-    r_errs = np.array([list(r_errors.values())]).transpose()
-    r_err_avg = np.sum(r_errs) / len(r_errors)
-    print("Average rotation error: " + str(r_err_avg) + ", no of images " + str(len(r_errors)))
+    df = pd.DataFrame(errors_dict)
+    r_errs = np.array([list(df["rotation_err"])]).transpose()
+    r_err_avg = np.sum(r_errs) / len(r_errs)
+    print("Average rotation error: " + str(r_err_avg) + ", no of images " + str(len(r_errs)))
 
-    t_errs = np.array([list(t_errors.values())]).transpose()
+    t_errs = np.array([list(df["translation_err"])]).transpose()
     t_err_avg = np.sum(t_errs) / len(t_errs)
-    print("Average translation error: " + str(t_err_avg) + ", no of images " + str(len(r_errors)))
+    print("Average translation error: " + str(t_err_avg) + ", no of images " + str(len(t_errs)))
 
     maa = ComputeMaa(r_errs, t_errs)
     print(f'Mean average Accuracy: ": {maa[0]:.05f}')
 
     # draw a bar plot for the rotation error
-    draw_error_plt(r_errors.keys(), list(r_errors.values()), "Rotation", "degrees", r_err_avg, params.results_path)
+    draw_error_plt(list(df["img_id"]), list(df["rotation_err"]), "Rotation", "degrees", r_err_avg, params.results_path)
     # draw a bar plot for the translation error
-    draw_error_plt(t_errors.keys(), list(t_errors.values()), "Translation", "meters", t_err_avg, params.results_path)
+    draw_error_plt(list(df["img_id"]), list(df["translation_err"]), "Translation", "meters", t_err_avg, params.results_path)
 
     # save the errors
-    np.save(params.pose_rot_err_save_path, r_errors)
-    np.save(params.pose_translation_err_save_path, t_errors)
+    # np.save(params.pose_rot_err_save_path, r_errors)
+    # np.save(params.pose_translation_err_save_path, t_errors)
+    df = df.sort_values(by=["rotation_err"])
+    df.to_csv(params.pose_err_save_path, index=False)
 
     return t_err_avg, r_err_avg, maa[0]
 
@@ -242,4 +247,4 @@ def draw_error_plt(img_names, errors, err_name, unit, err_avg, save_path):
             ha="right", va="center")
 
     plt.savefig(save_path + err_name + 'Error.png', dpi=300, bbox_inches='tight')
-    plt.show()
+    # plt.show()

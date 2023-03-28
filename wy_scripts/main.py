@@ -72,7 +72,7 @@ def main():
     #     matrix = get_camera_matrix(db_query, query_images_names[i])
 
     # load the saved poses data file or do pose estimation
-    if os.path.exists(params.poses_save_path):
+    if os.path.exists(params.poses_save_path) and (not matching_timer_on):
         rt_poses = np.load(params.poses_save_path, allow_pickle=True).item()
         degenerate_pose_perc = (len(query_images_names) - len(rt_poses)) / len(query_images_names)
         print("Load poses from file " + params.poses_save_path + "!")
@@ -104,11 +104,11 @@ def get_filter_model(method, params):
         return True, get_sgd_model(params, 0)
     elif method == "sgd_rgb":
         return True, get_sgd_model(params, 1)
-    elif method == "kerasNN":
+    elif method == "kerasNN_xy":
         return True, get_kerasNN_model(params, 0, 0)
     elif method == "kerasNN_rgb":
         return True, get_kerasNN_model(params, 1, 0)
-    elif method == "MSFENN":
+    elif method == "MSFENN_xy":
         return True, get_kerasNN_model(params, 0, 1)
     elif method == "MSFENN_rgb":
         return True, get_kerasNN_model(params, 1, 1)

@@ -11,6 +11,7 @@ class Parameters(object):
         self.method = method
 
         base_path = os.path.join(dataset_path, "exmaps_data")
+        normalized_path = os.path.join(dataset_path, "normalized")
         self.train_database_path = os.path.join(base_path, "base/database.db")
         self.train_points3D_path = os.path.join(base_path, "base/model/points3D.bin")
         self.train_model_cameras_path = os.path.join(base_path, "base/model/cameras.bin")
@@ -19,9 +20,13 @@ class Parameters(object):
         self.query_img_folder = os.path.join(base_path, "gt/images/")
 
         saved_data_path = os.path.join(base_path, "savedData/" + method + "_saved_data")
+        # if normalized_feature:
+        #     saved_data_path = os.path.join(normalized_path, "savedData/" + method + "_saved_data")
         if not os.path.exists(saved_data_path):
             os.makedirs(saved_data_path)
         self.results_path = os.path.join(base_path, "results/" + method + "_results/")
+        # if normalized_feature:
+        #     self.results_path = os.path.join(normalized_path, "results/" + method + "_results/")
         if not os.path.exists(self.results_path):
             os.makedirs(self.results_path)
 
@@ -35,8 +40,9 @@ class Parameters(object):
         if not os.path.exists(est_img_path):
             os.makedirs(est_img_path)
         self.est_img_save_path = os.path.join(self.results_path, "est_pnts_on_img/")
-        self.pose_rot_err_save_path = os.path.join(self.results_path, "rot_err.npy")
-        self.pose_translation_err_save_path = os.path.join(self.results_path, "trans_err.npy")
+        # self.pose_rot_err_save_path = os.path.join(self.results_path, "rot_err.npy")
+        # self.pose_translation_err_save_path = os.path.join(self.results_path, "trans_err.npy")
+        self.pose_err_save_path = os.path.join(self.results_path, slice_id + "_" + method + "_errors.csv")
 
         # not the session ones!
         self.query_gt_img_bin_path = os.path.join(base_path, "gt/model/images.bin")
@@ -51,9 +57,11 @@ class Parameters(object):
 
         # make sure you delete the databases (.db) file first! and "ML_data" folder has to be created manually
         ml_db_dir = os.path.join(dataset_path, "ML_data/")
+        # if normalized_feature:
+        #     ml_db_dir = os.path.join(dataset_path, "normalized_ML_data/")
         # ml_db_dir = os.path.join(dataset_path, "ML_xy_data/")
         os.makedirs(ml_db_dir, exist_ok=True)
-        self.ml_db_path = os.path.join(ml_db_dir, "ml_database_all.db")
+        self.ml_db_path = os.path.join(dataset_path, "ML_data/ml_database_all.db")
 
         self.rf_rgb_model_path = os.path.join(ml_db_dir, "rf_rgb.joblib")
         self.rf_rgb_metrics_path = os.path.join(ml_db_dir, slice_id + "_" + "rf_rgb_metrics.txt")
@@ -85,4 +93,6 @@ class Parameters(object):
         self.MSFENN_rgb_metrics_path = os.path.join(ml_db_dir, slice_id + "_" + "MSFENN_rgb_metrics.txt")
 
         self.report_path = os.path.join(base_path, slice_id + "_" + method + "_report.txt")
+        # if normalized_feature:
+        #     self.report_path = os.path.join(dataset_path, "normalized/" + slice_id + "_" + method + "_report.txt")
 

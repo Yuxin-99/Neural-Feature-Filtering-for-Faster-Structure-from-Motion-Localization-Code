@@ -1,7 +1,8 @@
 import numpy as np
 import os
 import sys
-from sklearn.metrics import confusion_matrix, precision_score, recall_score, accuracy_score
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, accuracy_score, balanced_accuracy_score
+from sklearn import preprocessing
 from tqdm import tqdm
 
 from database import COLMAPDatabase
@@ -16,7 +17,8 @@ from kerasNN_model import get_kerasNN_model
 def main():
     base_path = sys.argv[1]
     session_id = sys.argv[2]
-    parameters = Parameters(base_path, session_id, "base")
+    method = sys.argv[4]
+    parameters = Parameters(base_path, session_id, method)
     # feature_with_xy = sys.argv[3] == "1"
     feature_with_rgb = sys.argv[3] == "1"
 
@@ -29,11 +31,11 @@ def main():
 
     # ------ train the classifier model ------
     # clf_model = get_svm_model(parameters, feature_with_rgb)
-    # clf_model = get_sgd_model(parameters, feature_with_rgb)
-    clf_model = get_kerasNN_model(parameters, feature_with_rgb, 1)
+    clf_model = get_sgd_model(parameters, feature_with_rgb)
+    # clf_model = get_kerasNN_model(parameters, feature_with_rgb, 0)
     # clf_model = get_rf_model(parameters, 1, feature_with_rgb)
     gt_test_data = get_ml_test_data(parameters)
-    test_classify_model(clf_model, gt_test_data, feature_with_rgb, parameters.MSFENN_rgb_metrics_path, parameters.slice_id)
+    test_classify_model(clf_model, gt_test_data, feature_with_rgb, parameters.sgd_rgb_metrics_path, parameters.slice_id, method)
 
 
 def get_image_decs(db, image_id):
@@ -139,13 +141,14 @@ def get_ml_test_data(params):
     return data_to_write.astype(np.float32)
 
 
-def test_classify_model(clf_model, gt_test_data, with_rgb, ml_metrics_path, slice_id):
+def test_classify_model(clf_model, gt_test_data, with_rgb, ml_metrics_path, slice_id, method):
     # ------ test and evaluate the classifier model ------
     print("Testing the model")
     if with_rgb:
         X_test = gt_test_data[:, 0:133]
     else:
         X_test = gt_test_data[:, 0:130]
+    # X_test_normalized = preprocessing.normalize(X_test, axis=0)
     y_true = gt_test_data[:, 133].astype(np.uint8)
     y_pred_pos = clf_model.predict(X_test)
     y_pred_class = y_pred_pos > 0.5
@@ -166,8 +169,13 @@ def test_classify_model(clf_model, gt_test_data, with_rgb, ml_metrics_path, slic
     # shouldn't be used on imbalanced problem
     accuracy = accuracy_score(y_true, y_pred_class)  # or optionally (tp + tn) / (tp + fp + fn + tn)
     print("Accuracy score: " + str(accuracy))
+
+    balanced_acc = balanced_accuracy_score(y_true, y_pred_class)
+    print("Balanced Accuracy score: " + str(balanced_acc))
     with open(ml_metrics_path, 'w') as f:
         f.write("Data slice: " + slice_id)
+        f.write('\n')
+        f.write("Method: " + method)
         f.write('\n')
         f.write("Precision score: " + str(precision))
         f.write('\n')
@@ -176,6 +184,8 @@ def test_classify_model(clf_model, gt_test_data, with_rgb, ml_metrics_path, slic
         f.write("Specificity score: " + str(specificity))
         f.write('\n')
         f.write("Accuracy score: " + str(accuracy))
+        f.write('\n')
+        f.write("Balanced Accuracy score: " + str(balanced_acc))
         f.write('\n')
 
 
